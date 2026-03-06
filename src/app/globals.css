@@ -127,3 +127,22 @@
     @apply font-sans;
   }
 }
+
+/* Diff line colors */
+:root {
+  --diff-add-bg: oklch(0.95 0.05 145);
+  --diff-add-text: oklch(0.35 0.1 145);
+  --diff-remove-bg: oklch(0.95 0.05 25);
+  --diff-remove-text: oklch(0.35 0.1 25);
+  --diff-hunk-bg: oklch(0.95 0.03 250);
+  --diff-selected-bg: oklch(0.92 0.05 250);
+}
+
+.dark {
+  --diff-add-bg: oklch(0.25 0.06 145);
+  --diff-add-text: oklch(0.8 0.1 145);
+  --diff-remove-bg: oklch(0.25 0.06 25);
+  --diff-remove-text: oklch(0.8 0.1 25);
+  --diff-hunk-bg: oklch(0.22 0.03 250);
+  --diff-selected-bg: oklch(0.28 0.05 250);
+}

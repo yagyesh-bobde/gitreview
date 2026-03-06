@@ -1,7 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Enable WASM support for Shiki syntax highlighter
+  // Empty turbopack config to opt-in to Turbopack (Next.js 16 default)
+  turbopack: {},
+
+  // WASM support for Shiki syntax highlighter (webpack fallback)
   webpack(config) {
     config.experiments = {
       ...config.experiments,
