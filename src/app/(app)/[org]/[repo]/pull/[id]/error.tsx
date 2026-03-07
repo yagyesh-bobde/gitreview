@@ -1,5 +1,8 @@
 'use client';
 
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 export default function PullRequestError({
   error,
   reset,
@@ -8,15 +11,16 @@ export default function PullRequestError({
   reset: () => void;
 }) {
   return (
-    <div className="container mx-auto flex flex-col items-center gap-4 p-6">
-      <h1 className="text-2xl font-bold">Error loading pull request</h1>
-      <p className="text-muted-foreground">{error.message}</p>
-      <button
-        onClick={reset}
-        className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90"
-      >
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+      <AlertTriangle className="size-12 text-destructive" />
+      <div className="space-y-1">
+        <h1 className="text-lg font-semibold text-zinc-100">Error loading pull request</h1>
+        <p className="max-w-md text-sm text-zinc-400">{error.message}</p>
+      </div>
+      <Button variant="outline" size="sm" onClick={reset}>
+        <RotateCcw className="size-3.5" />
         Try again
-      </button>
+      </Button>
     </div>
   );
 }

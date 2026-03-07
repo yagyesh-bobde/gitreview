@@ -1,2 +1,9 @@
-// Re-exports from diff-viewer/types (convenience)
-// TODO: Implement
+export type {
+  DiffViewMode,
+  LineType,
+  DiffSide,
+  DiffLine,
+  DiffHunk,
+  FileDiff,
+  SelectedLineRange,
+} from '@/features/diff-viewer/types';
