@@ -42,20 +42,31 @@ export const authConfig: NextAuthConfig = {
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const isOnLanding = nextUrl.pathname === '/';
       const isAuthRoute =
         nextUrl.pathname.startsWith('/login') ||
         nextUrl.pathname.startsWith('/auth-error');
 
-      // Auth routes are always accessible
-      if (isAuthRoute) {
-        // Redirect logged-in users away from login page
+      // Landing page: redirect authenticated users to dashboard,
+      // allow unauthenticated users through to see the marketing page
+      if (isOnLanding) {
         if (isLoggedIn) {
-          return Response.redirect(new URL('/', nextUrl));
+          return Response.redirect(new URL('/dashboard', nextUrl));
         }
         return true;
       }
 
-      // All other routes require authentication
+      // Auth routes (login, auth-error): always accessible to
+      // unauthenticated users, redirect authenticated users to dashboard
+      if (isAuthRoute) {
+        if (isLoggedIn) {
+          return Response.redirect(new URL('/dashboard', nextUrl));
+        }
+        return true;
+      }
+
+      // All other routes (app routes) require authentication.
+      // Returning false triggers NextAuth to redirect to pages.signIn (/login)
       return isLoggedIn;
     },
   },
