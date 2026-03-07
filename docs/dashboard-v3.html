@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitReview — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'Cascadia Code', 'ui-monospace', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { background-color: #09090b; overflow: hidden; }
+
+    .sidebar-item {
+      transition: background 0.1s ease;
+    }
+    .sidebar-item:hover {
+      background: rgba(255,255,255,0.04);
+    }
+    .sidebar-item.active {
+      background: rgba(249, 115, 22, 0.1);
+    }
+    .sidebar-item.active .repo-name {
+      color: #fb923c;
+    }
+
+    .pr-row-ide {
+      transition: background 0.1s ease;
+      border-left: 2px solid transparent;
+    }
+    .pr-row-ide:hover {
+      background: rgba(255,255,255,0.035);
+      border-left-color: #3f3f46;
+    }
+    .pr-row-ide.selected {
+      background: rgba(249, 115, 22, 0.08);
+      border-left-color: #f97316;
+    }
+
+    .activity-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+    }
+    .activity-dot.stale {
+      background: #3f3f46;
+      box-shadow: none;
+    }
+
+    .kbd {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-bottom-width: 2px;
+      color: #71717a;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    .badge-open {
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .badge-review {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .status-bar-item { color: #52525b; }
+    .status-bar-item:hover { color: #a1a1aa; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+    .panel-header { background: #111113; }
+    select option { background: #18181b; }
+  </style>
+</head>
+<body class="text-zinc-300 font-sans antialiased flex flex-col h-screen">
+
+  <!-- Title Bar / Header -->
+  <header class="shrink-0 bg-zinc-950 border-b border-zinc-800/70 h-10 flex items-center justify-between px-3 gap-3 select-none">
+
+    <!-- Left: logo + breadcrumb -->
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="flex items-center gap-2 shrink-0">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect width="20" height="20" rx="4" fill="#f97316"/>
+          <path d="M5.5 5.5h4l2.5 3.5-2.5 3.5h-4V10h2.8l1.2-1-1.2-1H5.5V5.5z" fill="white"/>
+          <circle cx="15" cy="10" r="1.8" fill="white"/>
+        </svg>
+        <span class="text-zinc-200 font-semibold text-sm font-mono">GitReview</span>
+      </div>
+      <span class="text-zinc-700">/</span>
+      <span class="text-zinc-500 text-xs font-mono truncate hidden sm:block">dashboard</span>
+      <span class="text-zinc-700 hidden sm:block">/</span>
+      <span class="text-orange-400/80 text-xs font-mono truncate hidden sm:block">pull-requests</span>
+    </div>
+
+    <!-- Center: Search command -->
+    <button class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 text-xs font-mono text-zinc-500 hover:text-zinc-400 transition-all group w-48 sm:w-64">
+      <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span class="flex-1 text-left">Go to PR...</span>
+      <kbd class="kbd text-[10px] px-1 py-0.5 rounded">⌘P</kbd>
+    </button>
+
+    <!-- Right: view toggles + avatar -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <!-- View toggle group -->
+      <div class="hidden sm:flex items-center gap-0 border border-zinc-800 rounded overflow-hidden">
+        <button title="List view" class="px-2 py-1 bg-zinc-800 text-zinc-400 border-r border-zinc-700">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <button title="Split view" class="px-2 py-1 text-zinc-600 hover:text-zinc-400 border-r border-zinc-800 transition-colors">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </button>
+        <button title="Grid view" class="px-2 py-1 text-zinc-600 hover:text-zinc-400 transition-colors">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+          </svg>
+        </button>
+      </div>
+
+      <button class="relative p-1.5 text-zinc-500 hover:text-zinc-300 transition-colors rounded">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span class="absolute top-1 right-1 w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+      </button>
+
+      <div class="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold cursor-pointer select-none ring-1 ring-transparent hover:ring-zinc-700 transition-all">
+        YB
+      </div>
+    </div>
+  </header>
+
+  <!-- Body: sidebar + main panel -->
+  <div class="flex flex-1 overflow-hidden">
+
+    <!-- Left Sidebar -->
+    <aside class="w-56 shrink-0 border-r border-zinc-800/60 bg-zinc-950 flex flex-col overflow-hidden hidden sm:flex">
+
+      <!-- Sidebar section: Filters -->
+      <div class="px-3 pt-3 pb-1">
+        <p class="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-1 mb-1.5 font-mono">Filters</p>
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono sidebar-item active">
+          <svg class="w-3.5 h-3.5 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          <span class="repo-name">Created by me</span>
+          <span class="ml-auto text-[10px] bg-zinc-800 text-zinc-500 rounded px-1.5 py-0.5 font-mono">3</span>
+        </button>
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono sidebar-item">
+          <svg class="w-3.5 h-3.5 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <span class="text-zinc-500">Review requested</span>
+          <span class="ml-auto text-[10px] bg-zinc-800 text-zinc-500 rounded px-1.5 py-0.5 font-mono">4</span>
+        </button>
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono sidebar-item">
+          <svg class="w-3.5 h-3.5 text-zinc-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+          </svg>
+          <span class="text-zinc-500">All open</span>
+          <span class="ml-auto text-[10px] bg-zinc-800 text-zinc-500 rounded px-1.5 py-0.5 font-mono">7</span>
+        </button>
+      </div>
+
+      <div class="mx-3 my-2 border-t border-zinc-800/50"></div>
+
+      <!-- Sidebar section: Repositories -->
+      <div class="px-3 pb-2 flex-1 overflow-y-auto">
+        <p class="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-1 mb-1.5 font-mono">Repositories</p>
+
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs sidebar-item">
+          <div class="activity-dot shrink-0"></div>
+          <span class="text-zinc-400 font-mono truncate flex-1">yagyesh-bobde</span>
+          <span class="text-[10px] text-zinc-600 font-mono">3</span>
+        </button>
+        <div class="pl-5 space-y-0.5 mb-1">
+          <button class="w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <svg class="w-3 h-3 text-zinc-700 shrink-0" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/></svg>
+            portfolio-manager
+          </button>
+          <button class="w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <svg class="w-3 h-3 text-zinc-700 shrink-0" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/></svg>
+            Lucrente-old-react
+          </button>
+          <button class="w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <svg class="w-3 h-3 text-zinc-700 shrink-0" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/></svg>
+            Software-Lab
+          </button>
+        </div>
+
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs sidebar-item">
+          <div class="activity-dot stale shrink-0"></div>
+          <span class="text-zinc-400 font-mono truncate flex-1">RndmCodeGuy20</span>
+          <span class="text-[10px] text-zinc-600 font-mono">3</span>
+        </button>
+        <div class="pl-5 space-y-0.5 mb-1">
+          <button class="w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <svg class="w-3 h-3 text-zinc-700 shrink-0" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/></svg>
+            Official_Website
+          </button>
+        </div>
+
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs sidebar-item">
+          <div class="activity-dot stale shrink-0"></div>
+          <span class="text-zinc-400 font-mono truncate flex-1">kaustav202</span>
+          <span class="text-[10px] text-zinc-600 font-mono">1</span>
+        </button>
+        <div class="pl-5 space-y-0.5">
+          <button class="w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors">
+            <svg class="w-3 h-3 text-zinc-700 shrink-0" fill="currentColor" viewBox="0 0 16 16"><path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/></svg>
+            organica
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom sidebar actions -->
+      <div class="border-t border-zinc-800/50 px-3 py-2 space-y-0.5">
+        <button class="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono sidebar-item text-zinc-600 hover:text-zinc-400">
+          <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Settings
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main panel -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Panel header / toolbar -->
+      <div class="panel-header border-b border-zinc-800/70 px-4 py-2.5 flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-3">
+          <h2 class="text-sm font-semibold text-zinc-200 font-mono">pull-requests</h2>
+          <span class="text-xs font-mono text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">7 open</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Sort -->
+          <div class="relative">
+            <select class="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-mono rounded pl-2.5 pr-6 py-1 hover:border-zinc-700 focus:outline-none cursor-pointer transition-colors">
+              <option>sort: updated</option>
+              <option>sort: created</option>
+              <option>sort: title</option>
+            </select>
+            <svg class="absolute right-1.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-zinc-600 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+          <button class="flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
+            filter
+          </button>
+          <button class="text-xs font-mono text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            sync
+          </button>
+        </div>
+      </div>
+
+      <!-- Column headers -->
+      <div class="bg-zinc-950 border-b border-zinc-800/50 px-4 py-1.5 flex items-center gap-4 shrink-0">
+        <div class="w-4 shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">Title</span>
+        </div>
+        <div class="w-36 hidden md:block shrink-0">
+          <span class="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">Repository</span>
+        </div>
+        <div class="w-20 hidden lg:block shrink-0">
+          <span class="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">Author</span>
+        </div>
+        <div class="w-24 shrink-0 text-right">
+          <span class="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">Updated</span>
+        </div>
+      </div>
+
+      <!-- PR Table / List -->
+      <div class="flex-1 overflow-y-auto">
+
+        <!-- PR 1 — selected / active row example -->
+        <div class="pr-row-ide selected px-4 py-3 flex items-center gap-4 cursor-pointer">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-100 font-medium truncate">Feat/stock screener</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-orange-400/70">#2</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">yagyesh-bobde/portfolio-manager</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">portfolio-manager</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">Y</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">yagyesh-b</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-500">2mo ago</span>
+          </div>
+        </div>
+
+        <!-- PR 2 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer border-t border-zinc-800/30">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">Feat/working</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#23</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">yagyesh-bobde/Lucrente-old-react</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">Lucrente-old-react</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">Y</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">yagyesh-b</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">2yr ago</span>
+          </div>
+        </div>
+
+        <!-- PR 3 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer border-t border-zinc-800/30">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">added helloworld</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#3</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">yagyesh-bobde/Software-Lab</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">Software-Lab</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">Y</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">yagyesh-b</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">2yr ago</span>
+          </div>
+        </div>
+
+        <!-- Divider / group label -->
+        <div class="px-4 py-2 bg-zinc-900/40 border-t border-b border-zinc-800/50 flex items-center gap-2">
+          <span class="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">review requested</span>
+          <span class="text-[10px] font-mono text-zinc-700 bg-zinc-800 rounded px-1.5">4</span>
+        </div>
+
+        <!-- PR 4 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">Adding Domains page</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+              <span class="badge-review text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">review</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#12</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">RndmCodeGuy20/Official_Website</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">Official_Website</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">R</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">RndmCode</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">2yr ago</span>
+          </div>
+        </div>
+
+        <!-- PR 5 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer border-t border-zinc-800/30">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">Responsive</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+              <span class="badge-review text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">review</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#16</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">RndmCodeGuy20/Official_Website</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">Official_Website</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">R</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">RndmCode</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">2yr ago</span>
+          </div>
+        </div>
+
+        <!-- PR 6 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer border-t border-zinc-800/30">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">Embed Form</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+              <span class="badge-review text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">review</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#14</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">RndmCodeGuy20/Official_Website</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">Official_Website</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">R</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">RndmCode</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">2yr ago</span>
+          </div>
+        </div>
+
+        <!-- PR 7 -->
+        <div class="pr-row-ide px-4 py-3 flex items-center gap-4 cursor-pointer border-t border-zinc-800/30">
+          <div class="shrink-0 flex items-center gap-1.5">
+            <div class="activity-dot stale shrink-0"></div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span class="text-sm text-zinc-300 font-medium truncate">Edit format</span>
+              <span class="badge-open text-[10px] px-1.5 py-0.5 rounded font-mono font-medium shrink-0">open</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-mono text-zinc-600">
+              <span class="text-zinc-500">#32</span>
+              <span class="text-zinc-700">·</span>
+              <span class="truncate">kaustav202/organica</span>
+            </div>
+          </div>
+          <div class="w-36 hidden md:block shrink-0">
+            <span class="text-xs font-mono text-zinc-500 truncate block">organica</span>
+          </div>
+          <div class="w-20 hidden lg:block shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-[9px] font-bold shrink-0">K</div>
+              <span class="text-xs font-mono text-zinc-500 truncate">kaustav202</span>
+            </div>
+          </div>
+          <div class="w-24 shrink-0 text-right">
+            <span class="text-xs font-mono text-zinc-600">3yr ago</span>
+          </div>
+        </div>
+
+      </div>
+      <!-- end pr list -->
+
+    </main>
+  </div>
+
+  <!-- Status Bar (VS Code-style) -->
+  <footer class="shrink-0 bg-zinc-950 border-t border-zinc-800/70 h-6 flex items-center px-3 gap-4 select-none" style="background:#0d0d0f;">
+    <div class="flex items-center gap-3 flex-1 min-w-0">
+      <button class="status-bar-item flex items-center gap-1 text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors">
+        <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+        Connected
+      </button>
+      <button class="status-bar-item text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors hidden sm:block">
+        7 open PRs
+      </button>
+      <button class="status-bar-item text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors hidden md:block">
+        4 repos
+      </button>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <button class="status-bar-item text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors hidden lg:block">
+        Last synced: just now
+      </button>
+      <button class="status-bar-item text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors flex items-center gap-1">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        1 notification
+      </button>
+      <button class="status-bar-item text-[11px] font-mono hover:bg-zinc-800 px-1.5 rounded transition-colors">
+        yagyesh-bobde
+      </button>
+    </div>
+  </footer>
+
+</body>
+</html>

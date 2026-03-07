@@ -1,11 +1,11 @@
 import type { NextAuthConfig } from 'next-auth';
 import GitHub from 'next-auth/providers/github';
 
-// Module augmentation for next-auth to include accessToken in Session and JWT.
-// We need next-auth/jwt resolvable for augmentation, so we declare it inline.
+// Module augmentation for next-auth to include accessToken and githubLogin.
 declare module 'next-auth' {
   interface Session {
     accessToken?: string;
+    githubLogin?: string;
   }
 }
 
@@ -25,16 +25,20 @@ export const authConfig: NextAuthConfig = {
     error: '/auth-error',
   },
   callbacks: {
-    jwt({ token, account }) {
-      // Persist the GitHub access token from the initial sign-in
+    jwt({ token, account, profile }) {
+      // Persist the GitHub access token and login from the initial sign-in
       if (account?.access_token) {
         token.accessToken = account.access_token;
+      }
+      if (profile?.login) {
+        token.githubLogin = profile.login as string;
       }
       return token;
     },
     session({ session, token }) {
-      // Expose accessToken and user id to the client session
+      // Expose accessToken, user id, and GitHub login to the client session
       session.accessToken = token.accessToken as string | undefined;
+      session.githubLogin = token.githubLogin as string | undefined;
       if (token.sub) {
         session.user.id = token.sub;
       }

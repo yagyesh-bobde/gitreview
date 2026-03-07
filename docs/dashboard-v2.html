@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitReview — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #09090b; }
+
+    .pr-card {
+      border-left: 3px solid #22c55e;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .pr-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      border-left-color: #4ade80;
+    }
+    .kbd {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-bottom-width: 2px;
+      color: #a1a1aa;
+    }
+    .badge-open {
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .badge-review {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    .repo-header::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      width: 100%; height: 1px;
+      background: rgba(255,255,255,0.06);
+      z-index: 0;
+    }
+    .view-btn-active {
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+      border-color: rgba(249, 115, 22, 0.3);
+    }
+    .view-btn-inactive {
+      color: #52525b;
+      border-color: transparent;
+    }
+    .view-btn-inactive:hover { color: #a1a1aa; }
+
+    select option { background-color: #18181b; }
+  </style>
+</head>
+<body class="text-zinc-100 min-h-screen font-sans antialiased">
+
+  <!-- Header -->
+  <header class="border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="relative">
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="30" height="30" rx="8" fill="url(#logoGrad)"/>
+            <path d="M9 9h5.5l3.5 4.5-3.5 4.5H9v-3h4l2-1.5L13 12H9V9z" fill="white" fill-opacity="0.95"/>
+            <circle cx="21" cy="15" r="2.5" fill="white" fill-opacity="0.95"/>
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="30" y2="30">
+                <stop offset="0%" stop-color="#fb923c"/>
+                <stop offset="100%" stop-color="#ec4899"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <span class="text-zinc-100 font-bold text-base tracking-tight">GitReview</span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <button class="flex-1 max-w-md flex items-center gap-2.5 px-3.5 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all text-left group shadow-inner">
+        <svg class="w-4 h-4 text-zinc-500 group-hover:text-zinc-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="text-zinc-500 text-sm flex-1 group-hover:text-zinc-400 transition-colors">Search or jump to PR...</span>
+        <kbd class="kbd text-xs px-1.5 py-0.5 rounded-md font-mono hidden sm:inline-flex items-center gap-0.5 text-zinc-500">
+          ⌘P
+        </kbd>
+      </button>
+
+      <!-- Right -->
+      <div class="flex items-center gap-3 shrink-0">
+        <!-- View toggle -->
+        <div class="hidden sm:flex items-center gap-0.5 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+          <button title="List view" class="view-btn-inactive border rounded px-2 py-1 text-xs transition-all font-medium flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <button title="Grid view" class="view-btn-active border rounded px-2 py-1 text-xs transition-all font-medium flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+            </svg>
+          </button>
+          <button title="Compact view" class="view-btn-inactive border rounded px-2 py-1 text-xs transition-all font-medium flex items-center gap-1.5">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+          </button>
+        </div>
+
+        <button class="relative p-2 text-zinc-500 hover:text-zinc-200 transition-colors rounded-lg hover:bg-zinc-900">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full ring-2 ring-zinc-950"></span>
+        </button>
+
+        <!-- Avatar with name -->
+        <div class="flex items-center gap-2 cursor-pointer group">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold select-none ring-2 ring-transparent group-hover:ring-zinc-700 transition-all">
+            YB
+          </div>
+          <span class="text-sm text-zinc-400 hidden sm:block group-hover:text-zinc-200 transition-colors">yagyesh-bobde</span>
+          <svg class="w-3 h-3 text-zinc-600 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero / Stats bar -->
+  <div class="border-b border-zinc-800/50 bg-gradient-to-r from-zinc-950 via-zinc-900/20 to-zinc-950">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-lg font-bold text-zinc-100">Pull Requests</h1>
+        <p class="text-sm text-zinc-500 mt-0.5">7 open across 4 repositories</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Stats pills -->
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2">
+            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+            <span class="text-xs text-zinc-400"><span class="text-zinc-200 font-semibold">7</span> open</span>
+          </div>
+          <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2">
+            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+            <span class="text-xs text-zinc-400"><span class="text-zinc-200 font-semibold">4</span> review needed</span>
+          </div>
+        </div>
+        <!-- Sort -->
+        <div class="relative">
+          <select class="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded-lg pl-3 pr-7 py-2 hover:border-zinc-700 focus:outline-none focus:border-orange-500/50 cursor-pointer transition-colors">
+            <option>Last updated</option>
+            <option>Date created</option>
+            <option>Title A–Z</option>
+          </select>
+          <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-10">
+
+    <!-- Group: yagyesh-bobde -->
+    <section>
+      <!-- Repo group header -->
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-zinc-200">yagyesh-bobde</h2>
+          <p class="text-xs text-zinc-500">3 open pull requests</p>
+        </div>
+        <div class="flex-1 h-px bg-zinc-800/60 ml-2"></div>
+        <span class="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-1 rounded-full">Author</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Card 1 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Feat/stock screener</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors truncate">portfolio-manager</span>
+              </div>
+            </div>
+            <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#2</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold">Y</div>
+              yagyesh-bobde
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 months ago
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-1 text-xs text-zinc-600">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                0
+              </div>
+              <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Feat/working</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors truncate">Lucrente-old-react</span>
+              </div>
+            </div>
+            <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#23</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold">Y</div>
+              yagyesh-bobde
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all md:col-span-1">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">added helloworld</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors truncate">Software-Lab</span>
+              </div>
+            </div>
+            <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#3</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold">Y</div>
+              yagyesh-bobde
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Group: RndmCodeGuy20 -->
+    <section>
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-zinc-200">RndmCodeGuy20</h2>
+          <p class="text-xs text-zinc-500">3 open pull requests</p>
+        </div>
+        <div class="flex-1 h-px bg-zinc-800/60 ml-2"></div>
+        <span class="text-xs text-blue-400/70 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-full">Review requested</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Card 4 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all" style="border-left-color: #60a5fa;">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Adding Domains page</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors">Official_Website</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+              <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+              <span class="badge-review text-xs px-2 py-0.5 rounded-full font-medium shrink-0 whitespace-nowrap">Review req.</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#12</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold">R</div>
+              RndmCodeGuy20
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all" style="border-left-color: #60a5fa;">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Responsive</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors">Official_Website</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+              <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+              <span class="badge-review text-xs px-2 py-0.5 rounded-full font-medium shrink-0 whitespace-nowrap">Review req.</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#16</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold">R</div>
+              RndmCodeGuy20
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all" style="border-left-color: #60a5fa;">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Embed Form</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors">Official_Website</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+              <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+              <span class="badge-review text-xs px-2 py-0.5 rounded-full font-medium shrink-0 whitespace-nowrap">Review req.</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#14</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold">R</div>
+              RndmCodeGuy20
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 2 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Group: kaustav202 -->
+    <section>
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/50 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4 text-zinc-400" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-semibold text-zinc-200">kaustav202</h2>
+          <p class="text-xs text-zinc-500">1 open pull request</p>
+        </div>
+        <div class="flex-1 h-px bg-zinc-800/60 ml-2"></div>
+        <span class="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-1 rounded-full">Author</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Card 7 -->
+        <div class="pr-card bg-zinc-900 border border-zinc-800 rounded-xl p-4 cursor-pointer hover:border-zinc-700 transition-all" style="border-left-color: #a78bfa;">
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <div class="flex-1 min-w-0">
+              <h3 class="text-sm font-semibold text-zinc-100 mb-1 hover:text-orange-400 transition-colors">Edit format</h3>
+              <div class="flex items-center gap-1.5 text-xs text-zinc-500">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+                </svg>
+                <span class="font-mono hover:text-zinc-300 transition-colors">organica</span>
+              </div>
+            </div>
+            <span class="badge-open text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Open</span>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap mb-4">
+            <span class="text-xs bg-zinc-800 text-zinc-400 border border-zinc-700/50 px-2 py-0.5 rounded font-mono">#32</span>
+            <span class="text-xs text-zinc-600">·</span>
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
+              <div class="w-4 h-4 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-[9px] font-bold">K</div>
+              kaustav202
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-800/60">
+            <div class="flex items-center gap-1 text-xs text-zinc-600">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Updated 3 years ago
+            </div>
+            <svg class="w-4 h-4 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800/40 mt-8 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+      <p class="text-xs text-zinc-700">GitReview — powered by GitHub API</p>
+      <p class="text-xs text-zinc-700">Last synced just now</p>
+    </div>
+  </footer>
+
+</body>
+</html>

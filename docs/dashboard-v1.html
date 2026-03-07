@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitReview — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica', 'Arial', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background-color: #09090b; }
+    .pr-row:hover { background-color: rgba(255,255,255,0.03); }
+    .pr-row { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .pr-row:last-child { border-bottom: none; }
+    .tab-active {
+      color: #f4f4f5;
+      border-bottom: 2px solid #f97316;
+    }
+    .tab-inactive {
+      color: #71717a;
+      border-bottom: 2px solid transparent;
+    }
+    .tab-inactive:hover { color: #a1a1aa; }
+    .badge-open {
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+    .kbd {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-bottom-width: 2px;
+      color: #a1a1aa;
+    }
+    select option { background-color: #18181b; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+  </style>
+</head>
+<body class="text-zinc-100 min-h-screen font-sans antialiased">
+
+  <!-- Header -->
+  <header class="border-b border-zinc-800 bg-zinc-950 sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-3 shrink-0">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="28" height="28" rx="6" fill="#f97316"/>
+          <path d="M8 8h5l3 4-3 4H8v-3h3.5l1.5-1-1.5-1H8V8z" fill="white"/>
+          <path d="M20 14c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z" fill="white"/>
+        </svg>
+        <span class="text-zinc-100 font-semibold text-base tracking-tight">GitReview</span>
+      </div>
+
+      <!-- Search -->
+      <button class="flex-1 max-w-xs flex items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left group">
+        <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="text-zinc-500 text-sm flex-1 group-hover:text-zinc-400 transition-colors">Search pull requests...</span>
+        <kbd class="kbd text-xs px-1.5 py-0.5 rounded font-mono hidden sm:inline-flex items-center gap-1">
+          <span>⌘</span><span>P</span>
+        </kbd>
+      </button>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- View toggle -->
+        <div class="hidden sm:flex items-center bg-zinc-900 border border-zinc-800 rounded-md p-0.5">
+          <button title="List view" class="p-1.5 rounded text-zinc-100 bg-zinc-800">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <button title="Compact view" class="p-1.5 rounded text-zinc-500 hover:text-zinc-300 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+          </button>
+          <button title="Grid view" class="p-1.5 rounded text-zinc-500 hover:text-zinc-300 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Notifications -->
+        <button class="relative p-1.5 text-zinc-400 hover:text-zinc-200 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span class="absolute top-1 right-1 w-1.5 h-1.5 bg-orange-500 rounded-full"></span>
+        </button>
+
+        <!-- Avatar -->
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-xs font-semibold select-none cursor-pointer ring-2 ring-transparent hover:ring-zinc-600 transition-all">
+          YB
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Page heading -->
+    <div class="mb-6">
+      <h1 class="text-xl font-semibold text-zinc-100 mb-1">Pull Requests</h1>
+      <p class="text-sm text-zinc-500">Track and review open pull requests across your repositories.</p>
+    </div>
+
+    <!-- Controls row -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-0">
+      <!-- Filter tabs -->
+      <div class="flex items-center gap-0">
+        <button class="tab-active text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap">
+          Created by me
+          <span class="ml-1.5 text-xs bg-zinc-800 text-zinc-400 rounded-full px-2 py-0.5 font-normal">3</span>
+        </button>
+        <button class="tab-inactive text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap">
+          Review requested
+          <span class="ml-1.5 text-xs bg-zinc-800 text-zinc-500 rounded-full px-2 py-0.5 font-normal">4</span>
+        </button>
+        <button class="tab-inactive text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap">
+          All
+          <span class="ml-1.5 text-xs bg-zinc-800 text-zinc-500 rounded-full px-2 py-0.5 font-normal">7</span>
+        </button>
+      </div>
+
+      <!-- Sort -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-zinc-500 hidden sm:inline">Sort by</span>
+        <div class="relative">
+          <select class="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors">
+            <option>Last updated</option>
+            <option>Date created</option>
+            <option>Title A–Z</option>
+            <option>Repository</option>
+          </select>
+          <svg class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        <button class="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-md px-3 py-1.5 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          Filter
+        </button>
+      </div>
+    </div>
+
+    <!-- PR List container -->
+    <div class="border border-zinc-800 rounded-xl overflow-hidden">
+
+      <!-- List header -->
+      <div class="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-4">
+        <span class="text-xs font-medium text-zinc-500 uppercase tracking-widest">Pull Request</span>
+        <span class="ml-auto text-xs text-zinc-600 hidden md:block">Repository</span>
+        <span class="text-xs text-zinc-600 hidden lg:block w-16 text-center">Status</span>
+        <span class="text-xs text-zinc-600 hidden lg:block w-28 text-right">Updated</span>
+      </div>
+
+      <!-- PR rows -->
+
+      <!-- PR 1 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Feat/stock screener</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#2</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">yagyesh-bobde/portfolio-manager</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">yagyesh-bobde</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">portfolio-manager</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 months ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 2 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Feat/working</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#23</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">yagyesh-bobde/Lucrente-old-react</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">yagyesh-bobde</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">Lucrente-old-react</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 3 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">added helloworld</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#3</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">yagyesh-bobde/Software-Lab</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">yagyesh-bobde</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">Software-Lab</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 4 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Adding Domains page</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+            <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">Review requested</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#12</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">RndmCodeGuy20/Official_Website</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">RndmCodeGuy20</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">Official_Website</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 5 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Responsive</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+            <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">Review requested</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#16</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">RndmCodeGuy20/Official_Website</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">RndmCodeGuy20</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">Official_Website</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 6 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Embed Form</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+            <span class="text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">Review requested</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#14</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">RndmCodeGuy20/Official_Website</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">RndmCodeGuy20</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">Official_Website</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">2 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+      <!-- PR 7 -->
+      <div class="pr-row px-4 py-3.5 flex items-center gap-3 sm:gap-4 cursor-pointer transition-colors">
+        <div class="shrink-0 mt-0.5">
+          <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-medium text-zinc-100 text-sm hover:text-orange-400 transition-colors truncate">Edit format</span>
+            <span class="badge-open text-xs px-2 py-0.5 rounded-full font-medium shrink-0">Open</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1 flex-wrap">
+            <span class="text-xs text-zinc-500 font-mono">#32</span>
+            <span class="text-zinc-700 text-xs">·</span>
+            <a href="#" class="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">kaustav202/organica</a>
+            <span class="text-zinc-700 text-xs hidden sm:inline">·</span>
+            <span class="text-xs text-zinc-600 hidden sm:inline">opened by <span class="text-zinc-500">kaustav202</span></span>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-1.5 shrink-0">
+          <div class="w-3.5 h-3.5 rounded-sm bg-zinc-800 flex items-center justify-center">
+            <svg class="w-2.5 h-2.5 text-zinc-500" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z"/>
+            </svg>
+          </div>
+          <span class="text-xs text-zinc-500 font-mono">organica</span>
+        </div>
+        <div class="shrink-0 text-right hidden lg:block">
+          <span class="text-xs text-zinc-500">3 years ago</span>
+        </div>
+        <svg class="w-4 h-4 text-zinc-700 shrink-0 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+
+    </div>
+    <!-- end list -->
+
+    <!-- Footer meta -->
+    <div class="mt-4 flex items-center justify-between">
+      <p class="text-xs text-zinc-600">Showing 7 open pull requests</p>
+      <p class="text-xs text-zinc-700">Last synced just now</p>
+    </div>
+
+  </main>
+
+</body>
+</html>
