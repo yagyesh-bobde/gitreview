@@ -1,2 +1,2 @@
 // Search/filter state
-// TODO: Implement
+// Skipped for MVP - will be implemented in a future iteration
