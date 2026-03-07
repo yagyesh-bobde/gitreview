@@ -274,27 +274,29 @@ export function ListViewSkeleton() {
 
 interface PRListViewProps {
   prs: PullRequest[];
-  /** The username of the currently authenticated user */
-  currentUser?: string;
+  /** All GitHub logins belonging to the authenticated user (across linked accounts) */
+  githubLogins: string[];
 }
 
-export function PRListView({ prs, currentUser }: PRListViewProps) {
+export function PRListView({ prs, githubLogins }: PRListViewProps) {
   const [filter, setFilter] = useState<FilterTab>('all');
   const [sort, setSort] = useState<SortKey>('updated');
 
+  const loginSet = useMemo(() => new Set(githubLogins), [githubLogins]);
+
   const createdByMe = useMemo(
-    () => prs.filter((pr) => currentUser && pr.author.login === currentUser),
-    [prs, currentUser],
+    () => prs.filter((pr) => loginSet.size > 0 && loginSet.has(pr.author.login)),
+    [prs, loginSet],
   );
 
   const reviewRequested = useMemo(
     () =>
       prs.filter(
         (pr) =>
-          pr.reviewers.some((r) => currentUser && r.login === currentUser) ||
-          (currentUser && pr.author.login !== currentUser),
+          pr.reviewers.some((r) => loginSet.size > 0 && loginSet.has(r.login)) ||
+          (loginSet.size > 0 && !loginSet.has(pr.author.login)),
       ),
-    [prs, currentUser],
+    [prs, loginSet],
   );
 
   const filteredPRs = useMemo(() => {
@@ -337,10 +339,10 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={cn(
-                'text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap border-b-2',
+                'text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap',
                 filter === tab.key
-                  ? 'text-zinc-100 border-orange-500'
-                  : 'text-zinc-500 border-transparent hover:text-zinc-400',
+                  ? 'text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-400',
               )}
             >
               {tab.label}

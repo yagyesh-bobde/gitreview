@@ -1,14 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
 export function SignInButton() {
+  const [loading, setLoading] = useState(false);
+
   return (
     <Button
       size="lg"
       className="w-full gap-2"
-      onClick={() => signIn('github', { callbackUrl: '/' })}
+      loading={loading}
+      onClick={() => {
+        setLoading(true);
+        signIn('github', { callbackUrl: '/' });
+      }}
     >
       <GithubIcon />
       Sign in with GitHub

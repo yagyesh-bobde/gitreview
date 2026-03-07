@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { Bell, List, LayoutGrid, GitPullRequest } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useUIStore, type DashboardView } from '@/stores/ui-store';
 import { useCommandPalette } from '@/features/keyboard';
+import { UserMenu } from '@/features/auth/components/user-menu';
 import { cn } from '@/lib/utils';
 
 
@@ -106,38 +106,6 @@ function NotificationBell() {
 }
 
 // ---------------------------------------------------------------------------
-// User avatar — initials in an orange gradient circle, dropdown on click
-// ---------------------------------------------------------------------------
-
-function UserAvatar() {
-  const { data: session } = useSession();
-
-  const initials = (() => {
-    const name = session?.user?.name ?? '';
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    if (parts.length === 1 && parts[0].length >= 2) {
-      return parts[0].slice(0, 2).toUpperCase();
-    }
-    if (parts.length === 1) {
-      return parts[0][0].toUpperCase();
-    }
-    return 'YB';
-  })();
-
-  return (
-    <div
-      title={session?.user?.name ?? 'User'}
-      className="size-7 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white text-xs font-semibold select-none cursor-pointer ring-2 ring-transparent hover:ring-zinc-600 transition-all"
-    >
-      {initials}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Header
 // ---------------------------------------------------------------------------
 
@@ -164,7 +132,7 @@ export function DashboardHeader() {
       <div className="flex items-center gap-2 shrink-0">
         <ViewToggle />
         <NotificationBell />
-        <UserAvatar />
+        <UserMenu />
       </div>
     </header>
   );

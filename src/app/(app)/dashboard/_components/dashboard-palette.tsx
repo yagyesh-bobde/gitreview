@@ -30,7 +30,8 @@ export function DashboardPalette() {
   useKeyboardScope('dashboard');
 
   const router = useRouter();
-  const { data: prs } = usePRList();
+  const { data } = usePRList();
+  const prs = data?.prs;
 
   const items: PaletteItem[] = useMemo(() => {
     if (!prs) return [];
