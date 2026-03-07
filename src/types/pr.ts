@@ -60,6 +60,8 @@ export interface PullRequest {
   draft: boolean;
   url: string;
   htmlUrl: string;
+  /** Which linked GitHub account fetched this PR (login username). */
+  accountLogin?: string;
 }
 
 // ---------------------------------------------------------------------------

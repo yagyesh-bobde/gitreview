@@ -12,6 +12,12 @@ interface AuthSession {
   isAuthenticated: boolean;
   /** The GitHub access token for API calls, if available */
   accessToken: string | undefined;
+  /** The internal GitReview user ID */
+  userId: string | undefined;
+  /** The currently active GitHub account ID */
+  activeAccountId: string | undefined;
+  /** The GitHub login of the active account */
+  githubLogin: string | undefined;
 }
 
 /**
@@ -25,5 +31,8 @@ export function useAuthSession(): AuthSession {
     isLoading: status === 'loading',
     isAuthenticated: status === 'authenticated',
     accessToken: session?.accessToken,
+    userId: session?.userId,
+    activeAccountId: session?.activeAccountId,
+    githubLogin: session?.githubLogin,
   };
 }

@@ -1,6 +1,5 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { usePRList } from '@/features/github/hooks/use-pr-list';
 import { useUIStore } from '@/stores/ui-store';
 import { DashboardHeader } from './dashboard-header';
@@ -79,12 +78,11 @@ function EmptyState() {
 // ---------------------------------------------------------------------------
 
 export function DashboardShell() {
-  const { data: session } = useSession();
   const dashboardView = useUIStore((s) => s.dashboardView);
-  const { data: prs, isLoading, error, refetch } = usePRList();
+  const { data, isLoading, error, refetch } = usePRList();
 
-  // Use GitHub login (username) for matching against PR author.login
-  const currentUser = session?.githubLogin ?? undefined;
+  const prs = data?.prs;
+  const githubLogins = data?.githubLogins ?? [];
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950">
@@ -101,9 +99,9 @@ export function DashboardShell() {
       ) : !prs || prs.length === 0 ? (
         <EmptyState />
       ) : dashboardView === 'ide' ? (
-        <PRIDEView prs={prs} currentUser={currentUser} />
+        <PRIDEView prs={prs} githubLogins={githubLogins} />
       ) : (
-        <PRListView prs={prs} currentUser={currentUser} />
+        <PRListView prs={prs} githubLogins={githubLogins} />
       )}
     </div>
   );

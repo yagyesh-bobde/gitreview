@@ -5,21 +5,28 @@ import type { PullRequest } from '@/types/pr';
 
 interface PRListResponse {
   prs: PullRequest[];
+  githubLogins: string[];
   error?: string;
 }
 
-async function fetchPRList(): Promise<PullRequest[]> {
+interface PRListData {
+  prs: PullRequest[];
+  githubLogins: string[];
+}
+
+async function fetchPRList(): Promise<PRListData> {
   const res = await fetch('/api/github/prs');
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(body.error ?? `Failed to fetch PRs: ${res.status}`);
   }
   const data: PRListResponse = await res.json();
-  return data.prs;
+  return { prs: data.prs, githubLogins: data.githubLogins };
 }
 
 /**
- * Fetch the authenticated user's open PRs (authored + review-requested).
+ * Fetch open PRs across all linked GitHub accounts.
+ * Returns both the PR list and the array of GitHub logins for filtering.
  * Polls every 2 minutes to keep the list fresh.
  */
 export function usePRList() {

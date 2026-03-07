@@ -1,9 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { GitBranch, User, Plus, Minus, ArrowLeft } from 'lucide-react';
+import { GitBranch, User, Plus, Minus, ArrowLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import type { PullRequest } from '@/types/pr';
+import { ActiveAccountBadge } from '@/features/auth/components/active-account-badge';
+import { useUIStore } from '@/stores/ui-store';
+import { cn } from '@/lib/utils/cn';
 
 interface PRMetadataBarProps {
   pr: PullRequest | null;
@@ -11,6 +14,9 @@ interface PRMetadataBarProps {
 }
 
 export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
+  const conversationOpen = useUIStore((s) => s.conversationOpen);
+  const toggleConversation = useUIStore((s) => s.toggleConversation);
+
   if (isLoading) {
     return (
       <div className="flex h-10 items-center gap-4 border-b border-zinc-800 bg-zinc-950 px-4">
@@ -59,6 +65,9 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.base.ref}</code>
       </div>
 
+      {/* Active account badge (only shown with multiple accounts) */}
+      <ActiveAccountBadge />
+
       {/* Stats */}
       <div className="ml-auto flex items-center gap-3 text-zinc-500">
         <span className="flex items-center gap-1">
@@ -72,6 +81,23 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
         <span>
           {pr.changedFiles} {pr.changedFiles === 1 ? 'file' : 'files'}
         </span>
+
+        <div className="h-4 w-px bg-zinc-800 shrink-0" />
+
+        <button
+          onClick={toggleConversation}
+          className={cn(
+            'flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors',
+            conversationOpen
+              ? 'bg-zinc-800 text-zinc-200'
+              : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+          )}
+          aria-label={conversationOpen ? 'Close conversation' : 'Open conversation'}
+          aria-pressed={conversationOpen}
+        >
+          <MessageSquare className="size-3.5" />
+          <span className="font-medium">Conversation</span>
+        </button>
       </div>
     </div>
   );

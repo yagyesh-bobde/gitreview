@@ -146,7 +146,6 @@ function ActivityDot({ active }: { active: boolean }) {
 
 interface SidebarProps {
   prs: PullRequest[];
-  currentUser?: string;
   activeFilter: SidebarFilter;
   setActiveFilter: (f: SidebarFilter) => void;
   selectedRepo: string | null;
@@ -381,10 +380,10 @@ function SectionDivider({ label, count }: { label: string; count: number }) {
 interface StatusBarProps {
   openCount: number;
   repoCount: number;
-  userName?: string;
+  githubLogins: string[];
 }
 
-function StatusBar({ openCount, repoCount, userName }: StatusBarProps) {
+function StatusBar({ openCount, repoCount, githubLogins }: StatusBarProps) {
   return (
     <footer
       className="shrink-0 bg-[#0d0d0f] border-t border-zinc-800/70 h-6 flex items-center px-3 gap-4 select-none"
@@ -405,8 +404,8 @@ function StatusBar({ openCount, repoCount, userName }: StatusBarProps) {
         <span className="text-[11px] font-mono text-zinc-600 px-1.5 hidden lg:block">
           Last synced: just now
         </span>
-        {userName && (
-          <span className="text-[11px] font-mono text-zinc-600 px-1.5">{userName}</span>
+        {githubLogins.length > 0 && (
+          <span className="text-[11px] font-mono text-zinc-600 px-1.5">{githubLogins.join(', ')}</span>
         )}
       </div>
     </footer>
@@ -476,29 +475,31 @@ export function IDEViewSkeleton() {
 
 interface PRIDEViewProps {
   prs: PullRequest[];
-  currentUser?: string;
+  githubLogins: string[];
 }
 
-export function PRIDEView({ prs, currentUser }: PRIDEViewProps) {
+export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
   const [activeFilter, setActiveFilter] = useState<SidebarFilter>('all');
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<number | null>(null);
   const [sort, setSort] = useState<SortKey>('updated');
 
+  const loginSet = useMemo(() => new Set(githubLogins), [githubLogins]);
+
   // Derived data
   const createdByMe = useMemo(
-    () => prs.filter((pr) => currentUser && pr.author.login === currentUser),
-    [prs, currentUser],
+    () => prs.filter((pr) => loginSet.size > 0 && loginSet.has(pr.author.login)),
+    [prs, loginSet],
   );
 
   const reviewRequested = useMemo(
     () =>
       prs.filter(
         (pr) =>
-          pr.reviewers.some((r) => currentUser && r.login === currentUser) ||
-          (currentUser && pr.author.login !== currentUser),
+          pr.reviewers.some((r) => loginSet.size > 0 && loginSet.has(r.login)) ||
+          (loginSet.size > 0 && !loginSet.has(pr.author.login)),
       ),
-    [prs, currentUser],
+    [prs, loginSet],
   );
 
   const filteredPRs = useMemo(() => {
@@ -523,10 +524,10 @@ export function PRIDEView({ prs, currentUser }: PRIDEViewProps) {
 
   // For "All" view, split into created + review sections
   const showSections = activeFilter === 'all' && !selectedRepo;
-  const createdSection = showSections ? filteredPRs.filter((pr) => currentUser && pr.author.login === currentUser) : [];
+  const createdSection = showSections ? filteredPRs.filter((pr) => loginSet.size > 0 && loginSet.has(pr.author.login)) : [];
   const reviewSection = showSections
     ? filteredPRs.filter(
-        (pr) => !currentUser || pr.author.login !== currentUser,
+        (pr) => loginSet.size === 0 || !loginSet.has(pr.author.login),
       )
     : [];
 
@@ -545,7 +546,6 @@ export function PRIDEView({ prs, currentUser }: PRIDEViewProps) {
         {/* Sidebar */}
         <Sidebar
           prs={prs}
-          currentUser={currentUser}
           activeFilter={activeFilter}
           setActiveFilter={setActiveFilter}
           selectedRepo={selectedRepo}
@@ -684,7 +684,7 @@ export function PRIDEView({ prs, currentUser }: PRIDEViewProps) {
       <StatusBar
         openCount={openCount}
         repoCount={uniqueRepos.size}
-        userName={currentUser}
+        githubLogins={githubLogins}
       />
     </div>
   );

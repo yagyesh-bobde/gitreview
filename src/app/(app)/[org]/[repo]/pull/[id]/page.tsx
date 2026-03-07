@@ -10,9 +10,11 @@ import { usePR } from '@/features/github/hooks/use-pr';
 import { usePRFiles } from '@/features/github/hooks/use-pr-files';
 import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
 import { useReviewStore } from '@/stores/review-store';
+import { useUIStore } from '@/stores/ui-store';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { PageError } from './page-error';
 import { ReviewPalette } from './review-palette';
+import { ConversationPanel } from './conversation-panel';
 
 interface Props {
   params: Promise<{ org: string; repo: string; id: string }>;
@@ -22,6 +24,7 @@ export default function PullRequestPage({ params }: Props) {
   const { org, repo, id } = use(params);
   const activeFile = useReviewStore((s) => s.activeFile);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
+  const conversationOpen = useUIStore((s) => s.conversationOpen);
 
   const prNumber = Number(id);
   const pr = usePR(org, repo, prNumber);
@@ -75,23 +78,31 @@ export default function PullRequestPage({ params }: Props) {
 
         <PRMetadataBar pr={pr.data ?? null} isLoading={pr.isLoading} />
 
-        <SidebarLayout
-          sidebar={
-            files.isLoading ? (
-              <FileTreeSkeleton />
-            ) : files.error ? (
-              <FileTreeError onRetry={() => files.refetch()} />
-            ) : files.data ? (
-              <FileTree
-                files={files.data}
-                selectedFile={activeFile}
-                onFileSelect={handleFileSelect}
-              />
-            ) : null
-          }
-        >
-          <DiffViewer fileDiff={diff.data ?? null} isLoading={diff.isLoading} />
-        </SidebarLayout>
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <SidebarLayout
+              sidebar={
+                files.isLoading ? (
+                  <FileTreeSkeleton />
+                ) : files.error ? (
+                  <FileTreeError onRetry={() => files.refetch()} />
+                ) : files.data ? (
+                  <FileTree
+                    files={files.data}
+                    selectedFile={activeFile}
+                    onFileSelect={handleFileSelect}
+                  />
+                ) : null
+              }
+            >
+              <DiffViewer fileDiff={diff.data ?? null} isLoading={diff.isLoading} />
+            </SidebarLayout>
+          </div>
+
+          {conversationOpen && (
+            <ConversationPanel org={org} repo={repo} prNumber={prNumber} />
+          )}
+        </div>
       </div>
     </ErrorBoundary>
   );
