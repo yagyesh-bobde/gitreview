@@ -1,8 +1,8 @@
 /**
  * PR review page layout.
- * Uses fixed positioning to create a full-viewport immersive view,
- * bypassing the parent (app) layout's default header and padding.
+ * Fills the remaining viewport height from the parent flex container
+ * with a column layout for header -> metadata -> sidebar+diff.
  */
 export default function PullRequestLayout({ children }: { children: React.ReactNode }) {
-  return <div className="fixed inset-0 z-40 overflow-hidden bg-zinc-950">{children}</div>;
+  return <div className="flex h-screen flex-col overflow-hidden bg-zinc-950">{children}</div>;
 }

@@ -12,6 +12,7 @@ import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
 import { useReviewStore } from '@/stores/review-store';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { PageError } from './page-error';
+import { ReviewPalette } from './review-palette';
 
 interface Props {
   params: Promise<{ org: string; repo: string; id: string }>;
@@ -54,6 +55,7 @@ export default function PullRequestPage({ params }: Props) {
 
   return (
     <ErrorBoundary>
+      <ReviewPalette org={org} repo={repo} prNumber={prNumber} />
       <div className="flex h-full flex-col">
         <AppHeader
           pr={

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { GitPullRequest } from 'lucide-react';
+import { ArrowLeft, GitPullRequest } from 'lucide-react';
 import { UserMenu } from '@/features/auth/components/user-menu';
 import { cn } from '@/lib/utils/cn';
 
@@ -45,24 +45,33 @@ function StateBadge({ state, draft }: { state: string; draft?: boolean }) {
 export function AppHeader({ pr, org, repo, isLoading }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-zinc-800 bg-zinc-950 px-4">
-      {/* Left: Logo */}
-      <Link
-        href="/dashboard"
-        className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"
-      >
-        <GitPullRequest className="size-4" />
-        <span className="hidden sm:inline">GitReview</span>
-      </Link>
-
-      {/* Breadcrumb separator */}
-      {org && repo && (
-        <div className="ml-3 flex items-center gap-1.5 text-xs text-zinc-500">
-          <span>/</span>
-          <span className="text-zinc-400">
-            {org}/{repo}
-          </span>
-        </div>
-      )}
+      {/* Left: Back + Logo + Breadcrumb */}
+      <div className="flex items-center gap-2">
+        {org && repo && (
+          <Link
+            href="/dashboard"
+            className="flex size-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft className="size-4" />
+          </Link>
+        )}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"
+        >
+          <GitPullRequest className="size-4" />
+          <span className="hidden sm:inline">GitReview</span>
+        </Link>
+        {org && repo && (
+          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <span>/</span>
+            <span className="text-zinc-400">
+              {org}/{repo}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Center: PR title */}
       <div className="mx-4 flex min-w-0 flex-1 items-center justify-center gap-2">
