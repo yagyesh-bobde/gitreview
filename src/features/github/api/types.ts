@@ -70,6 +70,8 @@ export interface GitHubPullRequest {
   mergeable: boolean | null;
   mergeable_state: string;
   requested_reviewers: GitHubUser[];
+  /** Present on search API results */
+  repository_url?: string;
 }
 
 // ---------------------------------------------------------------------------

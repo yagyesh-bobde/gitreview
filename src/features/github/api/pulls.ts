@@ -132,8 +132,34 @@ export async function listUserPRs(token: string): Promise<PullRequest[]> {
     if (seen.has(item.id)) continue;
     seen.add(item.id);
 
-    // Search API returns a subset of fields. For the list view that's enough,
-    // but some fields like additions/deletions won't be present. We set defaults.
+    // Search API returns minimal fields. Parse org/repo from repository_url
+    // or html_url since base/head may not be present.
+    let repoOwner = '';
+    let repoName = '';
+    let repoFullName = '';
+
+    if (item.base?.repo) {
+      repoOwner = item.base.repo.owner.login;
+      repoName = item.base.repo.name;
+      repoFullName = item.base.repo.full_name;
+    } else if (item.repository_url) {
+      // repository_url is like "https://api.github.com/repos/owner/repo"
+      const parts = item.repository_url.split('/');
+      repoOwner = parts[parts.length - 2] ?? '';
+      repoName = parts[parts.length - 1] ?? '';
+      repoFullName = `${repoOwner}/${repoName}`;
+    } else if (item.html_url) {
+      // html_url is like "https://github.com/owner/repo/pull/123"
+      const match = item.html_url.match(/github\.com\/([^/]+)\/([^/]+)/);
+      if (match) {
+        repoOwner = match[1];
+        repoName = match[2];
+        repoFullName = `${repoOwner}/${repoName}`;
+      }
+    }
+
+    const repoInfo = { owner: repoOwner, name: repoName, fullName: repoFullName };
+
     prs.push({
       id: item.id,
       number: item.number,
@@ -155,7 +181,7 @@ export async function listUserPRs(token: string): Promise<PullRequest[]> {
               fullName: item.base.repo.full_name,
             },
           }
-        : { ref: '', sha: '', repo: { owner: '', name: '', fullName: '' } },
+        : { ref: '', sha: '', repo: repoInfo },
       head: item.head
         ? {
             ref: item.head.ref,
@@ -166,7 +192,7 @@ export async function listUserPRs(token: string): Promise<PullRequest[]> {
               fullName: item.head.repo.full_name,
             },
           }
-        : { ref: '', sha: '', repo: { owner: '', name: '', fullName: '' } },
+        : { ref: '', sha: '', repo: repoInfo },
       createdAt: item.created_at,
       updatedAt: item.updated_at,
       mergedAt: item.merged_at ?? null,
