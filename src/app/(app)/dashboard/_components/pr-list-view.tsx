@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronRight, ChevronDown, Filter } from 'lucide-react';
 import type { PullRequest, PullRequestState } from '@/types/pr';
 import { cn } from '@/lib/utils';
@@ -39,11 +38,12 @@ type FilterTab = 'all' | 'created' | 'review';
 type SortKey = 'updated' | 'created' | 'title' | 'repo';
 
 // ---------------------------------------------------------------------------
-// Status icon
+// Status icon — small green circle with git branch lines (open state)
 // ---------------------------------------------------------------------------
 
-function StatusIcon({ state, draft }: { state: PullRequestState; draft: boolean }) {
+function PRStatusIcon({ state, draft }: { state: PullRequestState; draft: boolean }) {
   if (draft) {
+    // Draft — grey dashed circle look
     return (
       <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-zinc-500">
         <path d="M4.75 7.25a.75.75 0 0 1 .75.75v4.25a.75.75 0 0 1-1.5 0V8a.75.75 0 0 1 .75-.75Zm3.25-2.5a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V5.5a.75.75 0 0 1 .75-.75Zm4 5a.75.75 0 0 1 .75.75v1.75a.75.75 0 0 1-1.5 0v-1.75a.75.75 0 0 1 .75-.75Z" />
@@ -64,11 +64,20 @@ function StatusIcon({ state, draft }: { state: PullRequestState; draft: boolean 
       </svg>
     );
   }
-  // open
+  // open — the mockup shows a simple git-pr style SVG in emerald
   return (
-    <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-emerald-500">
-      <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
-      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z" />
+    <svg
+      className="size-4 text-emerald-500"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+      />
     </svg>
   );
 }
@@ -106,7 +115,7 @@ function StatusBadge({ state, draft }: { state: PullRequestState; draft: boolean
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'updated', label: 'Last updated' },
   { key: 'created', label: 'Date created' },
-  { key: 'title', label: 'Title A-Z' },
+  { key: 'title', label: 'Title A–Z' },
   { key: 'repo', label: 'Repository' },
 ];
 
@@ -114,13 +123,19 @@ function sortPRs(prs: PullRequest[], sort: SortKey): PullRequest[] {
   const sorted = [...prs];
   switch (sort) {
     case 'updated':
-      return sorted.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      return sorted.sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      );
     case 'created':
-      return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return sorted.sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
     case 'title':
       return sorted.sort((a, b) => a.title.localeCompare(b.title));
     case 'repo':
-      return sorted.sort((a, b) => a.base.repo.fullName.localeCompare(b.base.repo.fullName));
+      return sorted.sort((a, b) =>
+        a.base.repo.fullName.localeCompare(b.base.repo.fullName),
+      );
     default:
       return sorted;
   }
@@ -144,7 +159,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
     >
       {/* Status icon */}
       <div className="shrink-0 mt-0.5">
-        <StatusIcon state={pr.state} draft={pr.draft} />
+        <PRStatusIcon state={pr.state} draft={pr.draft} />
       </div>
 
       {/* Title + meta */}
@@ -163,7 +178,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span className="text-xs text-zinc-500 font-mono">#{pr.number}</span>
           <span className="text-zinc-700 text-xs">·</span>
-          <span className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors truncate max-w-xs">
+          <span className="text-xs text-zinc-500 truncate max-w-xs">
             {repoFullName}
           </span>
           <span className="text-zinc-700 text-xs hidden sm:inline">·</span>
@@ -181,31 +196,8 @@ function PRRow({ pr }: { pr: PullRequest }) {
         <span className="text-xs text-zinc-500 font-mono">{repo}</span>
       </div>
 
-      {/* Diff stats */}
-      {(pr.additions > 0 || pr.deletions > 0) && (
-        <div className="hidden lg:flex items-center gap-2 shrink-0 text-xs">
-          {pr.additions > 0 && (
-            <span className="text-emerald-500/80">+{pr.additions.toLocaleString()}</span>
-          )}
-          {pr.deletions > 0 && (
-            <span className="text-red-400/80">-{pr.deletions.toLocaleString()}</span>
-          )}
-        </div>
-      )}
-
-      {/* Author avatar */}
-      <div className="hidden sm:flex items-center gap-2 shrink-0">
-        <Image
-          src={pr.author.avatarUrl}
-          alt={pr.author.login}
-          width={22}
-          height={22}
-          className="rounded-full ring-1 ring-zinc-700"
-        />
-      </div>
-
       {/* Timestamp */}
-      <div className="shrink-0 text-right hidden lg:block">
+      <div className="shrink-0 text-right hidden lg:block w-28">
         <span className="text-xs text-zinc-500">{relativeTime(pr.updatedAt)}</span>
       </div>
 
@@ -230,7 +222,7 @@ export function ListViewSkeleton() {
 
       {/* Tabs skeleton */}
       <div className="flex items-center gap-4 mb-0">
-        {[80, 120, 60].map((w, i) => (
+        {[100, 140, 60].map((w, i) => (
           <div key={i} className="h-9 animate-pulse rounded bg-zinc-800" style={{ width: w }} />
         ))}
       </div>
@@ -251,7 +243,6 @@ export function ListViewSkeleton() {
               <div className="h-3 w-48 animate-pulse rounded bg-zinc-800/60" />
             </div>
             <div className="hidden md:block h-3 w-28 animate-pulse rounded bg-zinc-800" />
-            <div className="hidden sm:block size-6 animate-pulse rounded-full bg-zinc-800" />
             <div className="hidden lg:block h-3 w-20 animate-pulse rounded bg-zinc-800" />
           </div>
         ))}
@@ -271,10 +262,9 @@ interface PRListViewProps {
 }
 
 export function PRListView({ prs, currentUser }: PRListViewProps) {
-  const [filter, setFilter] = useState<FilterTab>('all');
+  const [filter, setFilter] = useState<FilterTab>('created');
   const [sort, setSort] = useState<SortKey>('updated');
 
-  // Derive counts and filtered lists
   const createdByMe = useMemo(
     () => prs.filter((pr) => currentUser && pr.author.login === currentUser),
     [prs, currentUser],
@@ -305,10 +295,11 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
     return sortPRs(base, sort);
   }, [prs, createdByMe, reviewRequested, filter, sort]);
 
+  // Tabs in mockup order: Created by me | Review requested | All
   const tabs: { key: FilterTab; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: prs.length },
     { key: 'created', label: 'Created by me', count: createdByMe.length },
     { key: 'review', label: 'Review requested', count: reviewRequested.length },
+    { key: 'all', label: 'All', count: prs.length },
   ];
 
   return (
@@ -339,10 +330,8 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
               {tab.label}
               <span
                 className={cn(
-                  'ml-1.5 text-xs rounded-full px-2 py-0.5 font-normal',
-                  filter === tab.key
-                    ? 'bg-zinc-800 text-zinc-400'
-                    : 'bg-zinc-800 text-zinc-500',
+                  'ml-1.5 text-xs rounded-full px-2 py-0.5 font-normal bg-zinc-800',
+                  filter === tab.key ? 'text-zinc-400' : 'text-zinc-500',
                 )}
               >
                 {tab.count}
@@ -351,7 +340,7 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
           ))}
         </div>
 
-        {/* Sort */}
+        {/* Sort + Filter */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-500 hidden sm:inline">Sort by</span>
           <div className="relative">
@@ -359,9 +348,10 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors"
+              style={{ colorScheme: 'dark' }}
             >
               {SORT_OPTIONS.map((opt) => (
-                <option key={opt.key} value={opt.key}>
+                <option key={opt.key} value={opt.key} style={{ backgroundColor: '#18181b' }}>
                   {opt.label}
                 </option>
               ))}
@@ -377,16 +367,15 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
 
       {/* PR List container */}
       <div className="border border-zinc-800 rounded-xl overflow-hidden">
-        {/* List header */}
+        {/* Column headers */}
         <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-4">
           <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">
             Pull Request
           </span>
           <span className="ml-auto text-xs text-zinc-600 hidden md:block">Repository</span>
-          <span className="text-xs text-zinc-600 hidden lg:block w-16 text-center">Stats</span>
-          <span className="text-xs text-zinc-600 hidden sm:block w-8" />
+          <span className="text-xs text-zinc-600 hidden lg:block w-16 text-center">Status</span>
           <span className="text-xs text-zinc-600 hidden lg:block w-28 text-right">Updated</span>
-          <span className="w-4 hidden sm:block" />
+          <span className="size-4 hidden sm:block" />
         </div>
 
         {/* PR rows */}
@@ -415,7 +404,7 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
       {/* Footer meta */}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-xs text-zinc-600">
-          Showing {filteredPRs.length} pull request{filteredPRs.length !== 1 ? 's' : ''}
+          Showing {filteredPRs.length} open pull request{filteredPRs.length !== 1 ? 's' : ''}
         </p>
         <p className="text-xs text-zinc-700">Last synced just now</p>
       </div>
