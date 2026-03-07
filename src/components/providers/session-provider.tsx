@@ -1,7 +1,7 @@
 'use client';
 
-// NextAuth SessionProvider wrapper
-// TODO: Implement once auth is configured
+import { SessionProvider } from 'next-auth/react';
+
 export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <SessionProvider>{children}</SessionProvider>;
 }

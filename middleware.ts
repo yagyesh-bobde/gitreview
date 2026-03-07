@@ -1,10 +1,14 @@
-import { NextResponse } from 'next/server';
-
-export function middleware() {
-  // TODO: Add auth redirect logic and rate limit headers
-  return NextResponse.next();
-}
+export { auth as middleware } from '@/features/auth/auth';
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all paths except:
+     * - api/auth (NextAuth routes)
+     * - _next/static (static assets)
+     * - _next/image (image optimization)
+     * - favicon.ico, robots.txt, sitemap.xml
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+  ],
 };
