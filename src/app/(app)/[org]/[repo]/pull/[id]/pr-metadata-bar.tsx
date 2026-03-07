@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { GitBranch, User, Plus, Minus } from 'lucide-react';
+import { GitBranch, User, Plus, Minus, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import type { PullRequest } from '@/types/pr';
 
 interface PRMetadataBarProps {
@@ -24,6 +25,16 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
 
   return (
     <div className="flex h-10 shrink-0 items-center gap-4 overflow-x-auto border-b border-zinc-800 bg-zinc-950 px-4 text-xs">
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 transition-colors rounded hover:bg-zinc-800 px-1.5 py-1 -ml-1.5"
+      >
+        <ArrowLeft className="size-3.5" />
+        <span className="font-medium">Back</span>
+      </Link>
+
+      <div className="h-4 w-px bg-zinc-800 shrink-0" />
+
       {/* Author */}
       <div className="flex items-center gap-1.5 text-zinc-400">
         {pr.author.avatarUrl ? (

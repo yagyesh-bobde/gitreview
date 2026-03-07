@@ -189,20 +189,22 @@ function PRRow({ pr }: { pr: PullRequest }) {
       </div>
 
       {/* Repository column */}
-      <div className="hidden md:flex items-center gap-1.5 shrink-0">
-        <svg className="size-3.5 text-zinc-600" fill="currentColor" viewBox="0 0 16 16">
+      <div className="w-36 hidden md:flex items-center gap-1.5 shrink-0">
+        <svg className="size-3.5 text-zinc-600 shrink-0" fill="currentColor" viewBox="0 0 16 16">
           <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z" />
         </svg>
-        <span className="text-xs text-zinc-500 font-mono">{repo}</span>
+        <span className="text-xs text-zinc-500 font-mono truncate">{repo}</span>
       </div>
 
       {/* Timestamp */}
-      <div className="shrink-0 text-right hidden lg:block w-28">
+      <div className="w-28 shrink-0 text-right hidden lg:block">
         <span className="text-xs text-zinc-500">{relativeTime(pr.updatedAt)}</span>
       </div>
 
       {/* Chevron */}
-      <ChevronRight className="size-4 text-zinc-700 shrink-0 hidden sm:block" />
+      <div className="shrink-0 hidden sm:block w-4">
+        <ChevronRight className="size-4 text-zinc-700" />
+      </div>
     </Link>
   );
 }
@@ -213,7 +215,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
 
 export function ListViewSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+    <div className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Heading skeleton */}
       <div className="mb-6">
         <div className="h-6 w-36 animate-pulse rounded bg-zinc-800" />
@@ -229,21 +231,36 @@ export function ListViewSkeleton() {
 
       {/* List skeleton */}
       <div className="border border-zinc-800 rounded-xl overflow-hidden mt-0">
-        <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5">
-          <div className="h-3 w-24 animate-pulse rounded bg-zinc-800" />
+        <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-3 sm:gap-4">
+          <div className="w-4 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="h-3 w-24 animate-pulse rounded bg-zinc-800" />
+          </div>
+          <div className="w-36 hidden md:block shrink-0">
+            <div className="h-3 w-16 animate-pulse rounded bg-zinc-800" />
+          </div>
+          <div className="w-28 shrink-0 text-right hidden lg:block">
+            <div className="h-3 w-16 animate-pulse rounded bg-zinc-800 ml-auto" />
+          </div>
+          <div className="w-4 shrink-0 hidden sm:block" />
         </div>
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="px-4 py-3.5 flex items-center gap-4 border-b border-white/[0.06] last:border-b-0"
+            className="px-4 py-3.5 flex items-center gap-3 sm:gap-4 border-b border-white/[0.06] last:border-b-0"
           >
-            <div className="size-4 animate-pulse rounded-full bg-zinc-800" />
-            <div className="flex-1 space-y-2">
+            <div className="size-4 animate-pulse rounded-full bg-zinc-800 shrink-0" />
+            <div className="flex-1 min-w-0 space-y-2">
               <div className="h-4 w-64 animate-pulse rounded bg-zinc-800" />
               <div className="h-3 w-48 animate-pulse rounded bg-zinc-800/60" />
             </div>
-            <div className="hidden md:block h-3 w-28 animate-pulse rounded bg-zinc-800" />
-            <div className="hidden lg:block h-3 w-20 animate-pulse rounded bg-zinc-800" />
+            <div className="w-36 hidden md:block shrink-0">
+              <div className="h-3 w-20 animate-pulse rounded bg-zinc-800" />
+            </div>
+            <div className="w-28 shrink-0 text-right hidden lg:block">
+              <div className="h-3 w-20 animate-pulse rounded bg-zinc-800 ml-auto" />
+            </div>
+            <div className="w-4 shrink-0 hidden sm:block" />
           </div>
         ))}
       </div>
@@ -262,7 +279,7 @@ interface PRListViewProps {
 }
 
 export function PRListView({ prs, currentUser }: PRListViewProps) {
-  const [filter, setFilter] = useState<FilterTab>('created');
+  const [filter, setFilter] = useState<FilterTab>('all');
   const [sort, setSort] = useState<SortKey>('updated');
 
   const createdByMe = useMemo(
@@ -295,15 +312,14 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
     return sortPRs(base, sort);
   }, [prs, createdByMe, reviewRequested, filter, sort]);
 
-  // Tabs in mockup order: Created by me | Review requested | All
   const tabs: { key: FilterTab; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: prs.length },
     { key: 'created', label: 'Created by me', count: createdByMe.length },
     { key: 'review', label: 'Review requested', count: reviewRequested.length },
-    { key: 'all', label: 'All', count: prs.length },
   ];
 
   return (
-    <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+    <main className="mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Page heading */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-zinc-100 mb-1">Pull Requests</h1>
@@ -368,14 +384,20 @@ export function PRListView({ prs, currentUser }: PRListViewProps) {
       {/* PR List container */}
       <div className="border border-zinc-800 rounded-xl overflow-hidden">
         {/* Column headers */}
-        <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-4">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">
-            Pull Request
-          </span>
-          <span className="ml-auto text-xs text-zinc-600 hidden md:block">Repository</span>
-          <span className="text-xs text-zinc-600 hidden lg:block w-16 text-center">Status</span>
-          <span className="text-xs text-zinc-600 hidden lg:block w-28 text-right">Updated</span>
-          <span className="size-4 hidden sm:block" />
+        <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-3 sm:gap-4">
+          <div className="w-4 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">
+              Pull Request
+            </span>
+          </div>
+          <div className="w-36 hidden md:block shrink-0">
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Repository</span>
+          </div>
+          <div className="w-28 shrink-0 text-right hidden lg:block">
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Updated</span>
+          </div>
+          <div className="w-4 shrink-0 hidden sm:block" />
         </div>
 
         {/* PR rows */}

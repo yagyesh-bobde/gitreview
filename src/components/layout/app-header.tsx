@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, GitPullRequest } from 'lucide-react';
+import { GitPullRequest } from 'lucide-react';
 import { UserMenu } from '@/features/auth/components/user-menu';
 import { cn } from '@/lib/utils/cn';
 
@@ -47,15 +47,6 @@ export function AppHeader({ pr, org, repo, isLoading }: AppHeaderProps) {
     <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center border-b border-zinc-800 bg-zinc-950 px-4">
       {/* Left: Back + Logo + Breadcrumb */}
       <div className="flex items-center gap-2">
-        {org && repo && (
-          <Link
-            href="/dashboard"
-            className="flex size-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
-            aria-label="Back to dashboard"
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-        )}
         <Link
           href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"

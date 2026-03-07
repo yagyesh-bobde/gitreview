@@ -1,35 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, List, AlignJustify, LayoutGrid } from 'lucide-react';
+import { Bell, List, LayoutGrid, GitPullRequest } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useUIStore, type DashboardView } from '@/stores/ui-store';
 import { useCommandPalette } from '@/features/keyboard';
 import { cn } from '@/lib/utils';
 
-// ---------------------------------------------------------------------------
-// Logo
-// ---------------------------------------------------------------------------
 
-function LogoMark() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="shrink-0"
-    >
-      <rect width="28" height="28" rx="6" fill="#f97316" />
-      <path d="M8 8h5l3 4-3 4H8v-3h3.5l1.5-1-1.5-1H8V8z" fill="white" />
-      <path
-        d="M20 14c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"
-        fill="white"
-      />
-    </svg>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Search trigger — fake input that opens the command palette
@@ -73,7 +51,7 @@ function SearchTrigger() {
 // ---------------------------------------------------------------------------
 
 type ViewEntry = {
-  key: DashboardView | 'compact';
+  key: DashboardView;
   icon: typeof List;
   label: string;
 };
@@ -84,26 +62,18 @@ function ViewToggle() {
 
   const views: ViewEntry[] = [
     { key: 'list', icon: List, label: 'List view' },
-    { key: 'compact', icon: AlignJustify, label: 'Compact view' },
     { key: 'ide', icon: LayoutGrid, label: 'Grid view' },
   ];
 
   return (
     <div className="hidden sm:flex items-center bg-zinc-900 border border-zinc-800 rounded-md p-0.5">
       {views.map(({ key, icon: Icon, label }) => {
-        // "compact" is not a real store view — treat it as unselected unless
-        // neither 'list' nor 'ide' is active (it never will be, so it's always
-        // inactive, matching the mockup's decorative third button).
         const isActive = dashboardView === key;
         return (
           <button
             key={key}
             title={label}
-            onClick={() => {
-              if (key !== 'compact') {
-                setDashboardView(key as DashboardView);
-              }
-            }}
+            onClick={() => setDashboardView(key as DashboardView)}
             className={cn(
               'p-1.5 rounded transition-colors',
               isActive
@@ -173,26 +143,28 @@ function UserAvatar() {
 
 export function DashboardHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        {/* Left: Logo */}
+    <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4">
+      {/* Left: Logo */}
+      <div className="flex items-center gap-2">
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 shrink-0 text-zinc-100 transition-colors hover:text-white"
+          className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"
         >
-          <LogoMark />
-          <span className="font-semibold text-base tracking-tight">GitReview</span>
+          <GitPullRequest className="size-4" />
+          <span className="hidden sm:inline">GitReview</span>
         </Link>
+      </div>
 
-        {/* Center: Search */}
+      {/* Center: Search */}
+      <div className="mx-4 flex min-w-0 flex-1 items-center justify-center gap-2">
         <SearchTrigger />
+      </div>
 
-        {/* Right: View toggles + bell + avatar */}
-        <div className="flex items-center gap-2 shrink-0">
-          <ViewToggle />
-          <NotificationBell />
-          <UserAvatar />
-        </div>
+      {/* Right: View toggles + bell + avatar */}
+      <div className="flex items-center gap-2 shrink-0">
+        <ViewToggle />
+        <NotificationBell />
+        <UserAvatar />
       </div>
     </header>
   );
