@@ -22,9 +22,10 @@ export default function PullRequestPage({ params }: Props) {
   const activeFile = useReviewStore((s) => s.activeFile);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
 
-  const pr = usePR(org, repo, id);
-  const files = usePRFiles(org, repo, id);
-  const diff = usePRDiff(org, repo, id, activeFile);
+  const prNumber = Number(id);
+  const pr = usePR(org, repo, prNumber);
+  const files = usePRFiles(org, repo, prNumber);
+  const diff = usePRDiff(org, repo, prNumber, activeFile);
 
   // Auto-select first file when files load
   useEffect(() => {

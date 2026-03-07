@@ -5,8 +5,8 @@ import { memo } from 'react';
 import type { LineType } from '../types';
 
 interface DiffGutterProps {
-  oldLineNumber?: number;
-  newLineNumber?: number;
+  oldLineNumber?: number | null;
+  newLineNumber?: number | null;
   type: LineType;
   onClick?: () => void;
 }
@@ -78,7 +78,7 @@ export const SplitGutter = memo(function SplitGutter({
   type,
   onClick,
 }: {
-  lineNumber?: number;
+  lineNumber?: number | null;
   type: LineType;
   onClick?: () => void;
 }) {

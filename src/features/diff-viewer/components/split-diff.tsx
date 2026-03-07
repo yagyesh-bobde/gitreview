@@ -39,7 +39,7 @@ export function SplitDiff({ fileDiff }: SplitDiffProps) {
 
   useEffect(() => {
     if (!isLoading && allLines.length > 0) {
-      highlightLines(allLines, fileDiff.language);
+      highlightLines(allLines, fileDiff.language ?? 'text');
     }
   }, [isLoading, allLines, fileDiff.language, highlightLines]);
 

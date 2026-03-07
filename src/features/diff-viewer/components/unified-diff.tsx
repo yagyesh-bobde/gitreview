@@ -34,7 +34,7 @@ export function UnifiedDiff({ fileDiff }: UnifiedDiffProps) {
   // Trigger highlighting when file changes
   useEffect(() => {
     if (!isLoading && allLines.length > 0) {
-      highlightLines(allLines, fileDiff.language);
+      highlightLines(allLines, fileDiff.language ?? 'text');
     }
   }, [isLoading, allLines, fileDiff.language, highlightLines]);
 

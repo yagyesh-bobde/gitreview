@@ -43,9 +43,9 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
       {/* Branches */}
       <div className="flex items-center gap-1 text-zinc-500">
         <GitBranch className="size-3.5" />
-        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.headBranch}</code>
+        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.head.ref}</code>
         <span className="text-zinc-600">into</span>
-        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.baseBranch}</code>
+        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.base.ref}</code>
       </div>
 
       {/* Stats */}
