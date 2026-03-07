@@ -1,7 +1,4 @@
-/**
- * Core diff types used by the diff viewer and the diff parser.
- * Re-exported from @/types/diff for convenience.
- */
+import type { ThemedToken } from 'shiki';
 
 // ---------------------------------------------------------------------------
 // Line-level types
@@ -12,11 +9,8 @@ export type LineType = 'add' | 'delete' | 'context';
 export interface DiffLine {
   type: LineType;
   content: string;
-  /** Line number in the old file (null for additions) */
   oldLineNumber: number | null;
-  /** Line number in the new file (null for deletions) */
   newLineNumber: number | null;
-  /** True when the line has a "No newline at end of file" marker */
   noNewline?: boolean;
 }
 
@@ -25,13 +19,11 @@ export interface DiffLine {
 // ---------------------------------------------------------------------------
 
 export interface DiffHunk {
-  /** Raw @@ header line, e.g. "@@ -10,7 +10,8 @@ function foo()" */
   header: string;
   oldStart: number;
   oldLines: number;
   newStart: number;
   newLines: number;
-  /** Optional section heading extracted from the @@ line */
   sectionHeading: string | null;
   lines: DiffLine[];
 }
@@ -43,7 +35,6 @@ export interface DiffHunk {
 export interface FileDiff {
   filename: string;
   hunks: DiffHunk[];
-  /** Detected programming language (from file extension) */
   language: string | null;
   isBinary: boolean;
   isRenamed: boolean;
@@ -64,9 +55,39 @@ export type DiffSide = 'old' | 'new';
 // ---------------------------------------------------------------------------
 
 export interface LineMapping {
-  /** Diff-relative line index (0-based, across all hunks) */
   diffIndex: number;
   oldLineNumber: number | null;
   newLineNumber: number | null;
   type: LineType;
 }
+
+// ---------------------------------------------------------------------------
+// Derived types for rendering (virtual scroller rows)
+// ---------------------------------------------------------------------------
+
+/** A flattened row for the virtual scroller — either a hunk header or a code line */
+export type DiffRow =
+  | { kind: 'hunk-header'; hunkIndex: number; header: string }
+  | {
+      kind: 'line';
+      hunkIndex: number;
+      lineIndex: number;
+      line: DiffLine;
+      absoluteIndex: number;
+    };
+
+/** A paired row for split view — left (old) and right (new) side */
+export interface SplitRow {
+  left: DiffLine | null;
+  right: DiffLine | null;
+  absoluteIndex: number;
+}
+
+export type SplitDiffRow =
+  | { kind: 'hunk-header'; hunkIndex: number; header: string }
+  | { kind: 'line'; hunkIndex: number; row: SplitRow };
+
+/** Highlighted tokens for a single line */
+export type HighlightedLine = ThemedToken[];
+
+export type { ThemedToken };
