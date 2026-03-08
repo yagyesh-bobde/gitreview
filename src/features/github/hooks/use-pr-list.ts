@@ -3,15 +3,23 @@
 import { useQuery } from '@tanstack/react-query';
 import type { PullRequest } from '@/types/pr';
 
+export interface AccountStatus {
+  login: string;
+  status: 'ok' | 'error';
+  error?: string;
+}
+
 interface PRListResponse {
   prs: PullRequest[];
   githubLogins: string[];
+  accountStatuses?: AccountStatus[];
   error?: string;
 }
 
 interface PRListData {
   prs: PullRequest[];
   githubLogins: string[];
+  accountStatuses: AccountStatus[];
 }
 
 async function fetchPRList(): Promise<PRListData> {
@@ -21,7 +29,7 @@ async function fetchPRList(): Promise<PRListData> {
     throw new Error(body.error ?? `Failed to fetch PRs: ${res.status}`);
   }
   const data: PRListResponse = await res.json();
-  return { prs: data.prs, githubLogins: data.githubLogins };
+  return { prs: data.prs, githubLogins: data.githubLogins, accountStatuses: data.accountStatuses ?? [] };
 }
 
 /**

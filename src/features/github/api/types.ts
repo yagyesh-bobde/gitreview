@@ -108,6 +108,8 @@ export interface GitHubReviewComment {
   side: 'LEFT' | 'RIGHT';
   in_reply_to_id?: number;
   pull_request_review_id: number | null;
+  /** The diff hunk context around the commented line */
+  diff_hunk?: string;
 }
 
 // ---------------------------------------------------------------------------

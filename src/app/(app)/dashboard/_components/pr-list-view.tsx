@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ChevronDown, Filter } from 'lucide-react';
+import { ChevronRight, ChevronDown, EyeOff, X } from 'lucide-react';
 import type { PullRequest, PullRequestState } from '@/types/pr';
+import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -35,6 +36,7 @@ function relativeTime(dateStr: string): string {
 // ---------------------------------------------------------------------------
 
 type FilterTab = 'all' | 'created' | 'review';
+type DraftFilter = 'all' | 'ready' | 'draft';
 type SortKey = 'updated' | 'created' | 'title' | 'repo';
 
 // ---------------------------------------------------------------------------
@@ -280,7 +282,11 @@ interface PRListViewProps {
 
 export function PRListView({ prs, githubLogins }: PRListViewProps) {
   const [filter, setFilter] = useState<FilterTab>('all');
+  const [draftFilter, setDraftFilter] = useState<DraftFilter>('all');
   const [sort, setSort] = useState<SortKey>('updated');
+
+  const excludedRepos = useUIStore((s) => s.excludedRepos);
+  const clearExcludedRepos = useUIStore((s) => s.clearExcludedRepos);
 
   const loginSet = useMemo(() => new Set(githubLogins), [githubLogins]);
 
@@ -299,6 +305,8 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
     [prs, loginSet],
   );
 
+  const excludedSet = useMemo(() => new Set(excludedRepos), [excludedRepos]);
+
   const filteredPRs = useMemo(() => {
     let base: PullRequest[];
     switch (filter) {
@@ -311,8 +319,17 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
       default:
         base = prs;
     }
+    // Filter out excluded repos
+    if (excludedSet.size > 0) {
+      base = base.filter((pr) => !excludedSet.has(pr.base.repo.fullName));
+    }
+    if (draftFilter === 'ready') {
+      base = base.filter((pr) => !pr.draft);
+    } else if (draftFilter === 'draft') {
+      base = base.filter((pr) => pr.draft);
+    }
     return sortPRs(base, sort);
-  }, [prs, createdByMe, reviewRequested, filter, sort]);
+  }, [prs, createdByMe, reviewRequested, filter, draftFilter, sort, excludedSet]);
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: prs.length },
@@ -360,6 +377,17 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
 
         {/* Sort + Filter */}
         <div className="flex items-center gap-2">
+          {excludedRepos.length > 0 && (
+            <button
+              onClick={clearExcludedRepos}
+              className="flex items-center gap-1.5 text-xs font-medium text-amber-500/80 hover:text-amber-400 bg-amber-500/5 border border-amber-500/15 rounded-md px-2.5 py-1.5 transition-colors"
+              title="Click to unhide all repos"
+            >
+              <EyeOff className="size-3.5" />
+              {excludedRepos.length} hidden
+              <X className="size-3.5" />
+            </button>
+          )}
           <span className="text-xs text-zinc-500 hidden sm:inline">Sort by</span>
           <div className="relative">
             <select
@@ -376,10 +404,19 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
             </select>
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none" />
           </div>
-          <button className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-md px-3 py-1.5 transition-colors">
-            <Filter className="size-3.5" />
-            Filter
-          </button>
+          <div className="relative">
+            <select
+              value={draftFilter}
+              onChange={(e) => setDraftFilter(e.target.value as DraftFilter)}
+              className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors"
+              style={{ colorScheme: 'dark' }}
+            >
+              <option value="all" style={{ backgroundColor: '#18181b' }}>All PRs</option>
+              <option value="ready" style={{ backgroundColor: '#18181b' }}>Ready</option>
+              <option value="draft" style={{ backgroundColor: '#18181b' }}>Drafts</option>
+            </select>
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none" />
+          </div>
         </div>
       </div>
 

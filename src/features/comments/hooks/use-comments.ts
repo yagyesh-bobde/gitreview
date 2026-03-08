@@ -64,6 +64,7 @@ function groupIntoThreads(reviewComments: PRComment[]): CommentThread[] {
         path: comment.path,
         line: comment.line,
         side: comment.side,
+        diffHunk: comment.diffHunk,
         comments: [comment],
       });
     } else {
@@ -83,6 +84,7 @@ function groupIntoThreads(reviewComments: PRComment[]): CommentThread[] {
         path: reply.path,
         line: reply.line,
         side: reply.side,
+        diffHunk: reply.diffHunk,
         comments: [reply],
       });
     }

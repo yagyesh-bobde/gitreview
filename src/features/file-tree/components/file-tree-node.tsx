@@ -1,7 +1,8 @@
 "use client";
 
-import { File, Folder, FolderOpen } from "lucide-react";
+import { Check, File, Folder, FolderOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useReviewStore } from "@/stores/review-store";
 import type { FileTreeNode as FileTreeNodeType } from "../types";
 import { getImpactLevel } from "../lib/impact-scoring";
 import { FileImpactBadge } from "./file-impact-badge";
@@ -39,7 +40,9 @@ export function FileTreeNode({
   onSelect,
   onToggle,
 }: FileTreeNodeProps) {
+  const viewedFiles = useReviewStore((s) => s.viewedFiles);
   const isDirectory = node.type === "directory";
+  const isViewed = !isDirectory && !!viewedFiles[node.path];
   const changes = (node.additions ?? 0) + (node.deletions ?? 0);
   const impactLevel = changes > 0 ? getImpactLevel(changes) : null;
 
@@ -67,7 +70,8 @@ export function FileTreeNode({
         "group flex w-full items-center gap-1.5 rounded-sm px-2 py-1 text-left text-sm transition-colors duration-150",
         "hover:bg-zinc-800",
         isSelected && !isDirectory && "bg-zinc-700 text-white",
-        !isSelected && "text-zinc-400"
+        !isSelected && "text-zinc-400",
+        isViewed && !isSelected && "opacity-60"
       )}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
       aria-expanded={isDirectory ? isExpanded : undefined}
@@ -97,8 +101,13 @@ export function FileTreeNode({
         {node.name}
       </span>
 
+      {/* Viewed checkmark */}
+      {isViewed && (
+        <Check className="size-3 shrink-0 text-green-400" />
+      )}
+
       {/* Status dot for files */}
-      {!isDirectory && node.status && (
+      {!isDirectory && node.status && !isViewed && (
         <span
           className={cn(
             "size-1.5 shrink-0 rounded-full",

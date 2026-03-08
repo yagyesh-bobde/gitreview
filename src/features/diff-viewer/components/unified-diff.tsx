@@ -1,29 +1,61 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 
 import type { DiffRow, FileDiff, ThemedToken } from '../types';
+import type { CommentThread as CommentThreadType } from '@/features/comments/types';
+import { threadKey } from '@/features/comments/types';
+import type { PRCommentSide } from '@/types/pr';
 import { useDiffScroll } from '../hooks/use-diff-scroll';
 import { useLineSelection } from '../hooks/use-line-selection';
 import { useSyntaxHighlighter } from '../hooks/use-syntax-highlighter';
+import { useReviewStore } from '@/stores/review-store';
 import { DiffHunkHeader } from './diff-hunk';
 import { DiffLine } from './diff-line';
 import { DiffVirtualScroller } from './diff-virtual-scroller';
+import { InlineCommentThread } from './inline-comment-thread';
+import { InlineCommentForm } from './inline-comment-form';
 
-interface UnifiedDiffProps {
+export interface UnifiedDiffProps {
   fileDiff: FileDiff;
+  /** Comment threads grouped by anchor key */
+  threadsByAnchor?: Map<string, CommentThreadType[]>;
+  org?: string;
+  repo?: string;
+  prNumber?: number;
+  commitId?: string;
 }
 
 /**
- * Unified diff view — single column with additions and deletions interleaved.
+ * Unified diff view -- single column with additions and deletions interleaved.
  * Uses TanStack Virtual for efficient rendering of large diffs.
+ * Integrates inline comment threads and comment forms between diff lines.
  */
-export function UnifiedDiff({ fileDiff }: UnifiedDiffProps) {
+export function UnifiedDiff({
+  fileDiff,
+  threadsByAnchor,
+  org,
+  repo,
+  prNumber,
+  commitId,
+}: UnifiedDiffProps) {
   const { isLoading, tokens, highlightLines } = useSyntaxHighlighter();
   const { handleLineClick, isSelected } = useLineSelection();
+  const pendingAnchor = useReviewStore((s) => s.pendingCommentAnchor);
+  const setPendingAnchor = useReviewStore((s) => s.setPendingCommentAnchor);
 
-  // Flatten hunks into a single row array for the virtualizer
-  const rows = useMemo(() => flattenHunksToRows(fileDiff), [fileDiff]);
+  const commentsEnabled = !!(org && repo && prNumber && commitId);
+
+  // Flatten hunks into a single row array, interleaving comment rows
+  const rows = useMemo(
+    () =>
+      flattenHunksToRows(
+        fileDiff,
+        threadsByAnchor ?? new Map(),
+        pendingAnchor,
+      ),
+    [fileDiff, threadsByAnchor, pendingAnchor],
+  );
 
   // All lines across hunks for syntax highlighting
   const allLines = useMemo(
@@ -67,13 +99,30 @@ export function UnifiedDiff({ fileDiff }: UnifiedDiffProps) {
       if (row.kind === 'line') {
         map.set(rowIdx, globalIdx);
         globalIdx++;
-      } else {
-        // hunk header — skip the lines in previous hunks are already counted
-        // nothing to do, globalIdx advances only for lines
       }
     }
     return map;
   }, [rows]);
+
+  // Build a map from thread ID to thread for individual lookup during render
+  const threadById = useMemo(() => {
+    const map = new Map<number, CommentThreadType>();
+    if (!threadsByAnchor) return map;
+    for (const threads of threadsByAnchor.values()) {
+      for (const thread of threads) {
+        map.set(thread.id, thread);
+      }
+    }
+    return map;
+  }, [threadsByAnchor]);
+
+  const handleCommentClick = useCallback(
+    (path: string, line: number, side: PRCommentSide) => {
+      if (!commentsEnabled) return;
+      setPendingAnchor({ path, line, side });
+    },
+    [commentsEnabled, setPendingAnchor],
+  );
 
   return (
     <DiffVirtualScroller
@@ -88,21 +137,65 @@ export function UnifiedDiff({ fileDiff }: UnifiedDiffProps) {
           return <DiffHunkHeader header={row.header} />;
         }
 
+        if (row.kind === 'comment-thread') {
+          const thread = threadById.get(row.threadId);
+          if (!thread || !org || !repo || !prNumber) return null;
+          return (
+            <InlineCommentThread
+              thread={thread}
+              org={org}
+              repo={repo}
+              prNumber={prNumber}
+            />
+          );
+        }
+
+        if (row.kind === 'comment-form') {
+          if (!org || !repo || !prNumber || !commitId) return null;
+          return (
+            <InlineCommentForm
+              path={row.path}
+              line={row.line}
+              side={row.side}
+              commitId={commitId}
+              org={org}
+              repo={repo}
+              prNumber={prNumber}
+            />
+          );
+        }
+
         const globalLineIdx = rowToGlobalLineIndex.get(index);
         const lineTokens =
           globalLineIdx !== undefined
             ? tokensByGlobalIndex.get(globalLineIdx)
             : undefined;
 
+        // Determine the line number and side for commenting
+        const line = row.line;
+        const commentLine = line.newLineNumber ?? line.oldLineNumber;
+        const commentSide: PRCommentSide =
+          line.type === 'delete' ? 'LEFT' : 'RIGHT';
+
         return (
           <DiffLine
-            line={row.line}
+            line={line}
             tokens={lineTokens}
             isSelected={isSelected(row.absoluteIndex)}
             onClick={(shiftKey) =>
               handleLineClick(row.absoluteIndex, shiftKey)
             }
             variant="unified"
+            onCommentClick={
+              commentsEnabled && commentLine
+                ? () =>
+                    handleCommentClick(
+                      fileDiff.filename,
+                      commentLine,
+                      commentSide,
+                    )
+                : undefined
+            }
           />
         );
       }}
@@ -110,8 +203,15 @@ export function UnifiedDiff({ fileDiff }: UnifiedDiffProps) {
   );
 }
 
-/** Flatten all hunks into a single flat array of renderable rows */
-function flattenHunksToRows(fileDiff: FileDiff): DiffRow[] {
+/**
+ * Flatten all hunks into a single flat array of renderable rows,
+ * interleaving comment thread rows and pending comment form rows after their anchor lines.
+ */
+function flattenHunksToRows(
+  fileDiff: FileDiff,
+  threadsByAnchor: Map<string, CommentThreadType[]>,
+  pendingAnchor: { path: string; line: number; side: PRCommentSide } | null,
+): DiffRow[] {
   const rows: DiffRow[] = [];
   let absoluteIndex = 0;
 
@@ -125,13 +225,50 @@ function flattenHunksToRows(fileDiff: FileDiff): DiffRow[] {
     });
 
     for (let lineIdx = 0; lineIdx < hunk.lines.length; lineIdx++) {
+      const line = hunk.lines[lineIdx];
       rows.push({
         kind: 'line',
         hunkIndex: hunkIdx,
         lineIndex: lineIdx,
-        line: hunk.lines[lineIdx],
+        line,
         absoluteIndex: absoluteIndex++,
       });
+
+      // After each line, check for comment threads and pending form
+      const lineNum = line.newLineNumber ?? line.oldLineNumber;
+      const side: PRCommentSide = line.type === 'delete' ? 'LEFT' : 'RIGHT';
+
+      if (lineNum) {
+        const key = threadKey(fileDiff.filename, lineNum, side);
+
+        // Existing threads at this anchor
+        const threads = threadsByAnchor.get(key);
+        if (threads) {
+          for (const thread of threads) {
+            rows.push({
+              kind: 'comment-thread',
+              threadId: thread.id,
+              anchorKey: key,
+            });
+          }
+        }
+
+        // Pending comment form at this anchor
+        if (
+          pendingAnchor &&
+          pendingAnchor.path === fileDiff.filename &&
+          pendingAnchor.line === lineNum &&
+          pendingAnchor.side === side
+        ) {
+          rows.push({
+            kind: 'comment-form',
+            anchorKey: key,
+            path: pendingAnchor.path,
+            line: pendingAnchor.line,
+            side: pendingAnchor.side,
+          });
+        }
+      }
     }
   }
 

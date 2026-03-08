@@ -5,14 +5,16 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   ChevronDown,
-  Filter,
   RefreshCw,
   Settings,
   User,
   Eye,
+  EyeOff,
   AlignLeft,
+  X,
 } from 'lucide-react';
 import type { PullRequest, PullRequestState } from '@/types/pr';
+import { useUIStore } from '@/stores/ui-store';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -44,6 +46,7 @@ function shortRelativeTime(dateStr: string): string {
 // ---------------------------------------------------------------------------
 
 type SidebarFilter = 'created' | 'review' | 'all';
+type DraftFilter = 'all' | 'ready' | 'draft';
 type SortKey = 'updated' | 'created' | 'title';
 
 // ---------------------------------------------------------------------------
@@ -152,6 +155,8 @@ interface SidebarProps {
   setSelectedRepo: (r: string | null) => void;
   createdCount: number;
   reviewCount: number;
+  excludedRepos: string[];
+  toggleRepoExclusion: (repoFullName: string) => void;
 }
 
 function Sidebar({
@@ -162,6 +167,8 @@ function Sidebar({
   setSelectedRepo,
   createdCount,
   reviewCount,
+  excludedRepos,
+  toggleRepoExclusion,
 }: SidebarProps) {
   const orgGroups = useMemo(() => groupByOrg(prs), [prs]);
 
@@ -229,26 +236,45 @@ function Sidebar({
               {group.repos.map((repo) => {
                 const fullName = `${group.org}/${repo.name}`;
                 const isSelected = selectedRepo === fullName;
+                const isExcluded = excludedRepos.includes(fullName);
                 return (
-                  <button
-                    key={fullName}
-                    onClick={() => setSelectedRepo(isSelected ? null : fullName)}
-                    className={cn(
-                      'w-full text-left flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-mono transition-colors',
-                      isSelected
-                        ? 'bg-orange-500/10 text-orange-400'
-                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900',
-                    )}
-                  >
-                    <svg
-                      className="size-3 text-zinc-700 shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 16 16"
+                  <div key={fullName} className="group/repo flex items-center">
+                    <button
+                      onClick={() => setSelectedRepo(isSelected ? null : fullName)}
+                      className={cn(
+                        'flex-1 min-w-0 text-left flex items-center gap-1.5 px-2 py-1 rounded-l text-[11px] font-mono transition-colors',
+                        isExcluded
+                          ? 'text-zinc-700 line-through'
+                          : isSelected
+                            ? 'bg-orange-500/10 text-orange-400'
+                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900',
+                      )}
                     >
-                      <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z" />
-                    </svg>
-                    {repo.name}
-                  </button>
+                      <svg
+                        className="size-3 text-zinc-700 shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 16 16"
+                      >
+                        <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z" />
+                      </svg>
+                      <span className="truncate">{repo.name}</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRepoExclusion(fullName);
+                      }}
+                      title={isExcluded ? `Show ${fullName}` : `Hide ${fullName}`}
+                      className={cn(
+                        'shrink-0 p-1 rounded-r transition-colors',
+                        isExcluded
+                          ? 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
+                          : 'text-zinc-700 hover:text-zinc-400 hover:bg-zinc-800 opacity-0 group-hover/repo:opacity-100',
+                      )}
+                    >
+                      {isExcluded ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -480,9 +506,14 @@ interface PRIDEViewProps {
 
 export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
   const [activeFilter, setActiveFilter] = useState<SidebarFilter>('all');
+  const [draftFilter, setDraftFilter] = useState<DraftFilter>('all');
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedPR, setSelectedPR] = useState<number | null>(null);
   const [sort, setSort] = useState<SortKey>('updated');
+
+  const excludedRepos = useUIStore((s) => s.excludedRepos);
+  const toggleRepoExclusion = useUIStore((s) => s.toggleRepoExclusion);
+  const clearExcludedRepos = useUIStore((s) => s.clearExcludedRepos);
 
   const loginSet = useMemo(() => new Set(githubLogins), [githubLogins]);
 
@@ -502,6 +533,8 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
     [prs, loginSet],
   );
 
+  const excludedSet = useMemo(() => new Set(excludedRepos), [excludedRepos]);
+
   const filteredPRs = useMemo(() => {
     let base: PullRequest[];
     switch (activeFilter) {
@@ -514,13 +547,22 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
       default:
         base = prs;
     }
+    // Filter out excluded repos
+    if (excludedSet.size > 0) {
+      base = base.filter((pr) => !excludedSet.has(pr.base.repo.fullName));
+    }
     if (selectedRepo) {
       base = base.filter(
         (pr) => `${pr.base.repo.owner}/${pr.base.repo.name}` === selectedRepo,
       );
     }
+    if (draftFilter === 'ready') {
+      base = base.filter((pr) => !pr.draft);
+    } else if (draftFilter === 'draft') {
+      base = base.filter((pr) => pr.draft);
+    }
     return sortPRs(base, sort);
-  }, [prs, createdByMe, reviewRequested, activeFilter, selectedRepo, sort]);
+  }, [prs, createdByMe, reviewRequested, activeFilter, selectedRepo, draftFilter, sort, excludedSet]);
 
   // For "All" view, split into created + review sections
   const showSections = activeFilter === 'all' && !selectedRepo;
@@ -552,6 +594,8 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
           setSelectedRepo={setSelectedRepo}
           createdCount={createdByMe.length}
           reviewCount={reviewRequested.length}
+          excludedRepos={excludedRepos}
+          toggleRepoExclusion={toggleRepoExclusion}
         />
 
         {/* Main panel */}
@@ -563,6 +607,17 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
               <span className="text-xs font-mono text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">
                 {filteredPRs.length} open
               </span>
+              {excludedRepos.length > 0 && (
+                <button
+                  onClick={clearExcludedRepos}
+                  className="flex items-center gap-1.5 text-[11px] font-mono text-amber-500/80 hover:text-amber-400 bg-amber-500/5 border border-amber-500/15 rounded px-2 py-0.5 transition-colors"
+                  title="Click to unhide all repos"
+                >
+                  <EyeOff className="size-3" />
+                  {excludedRepos.length} repo{excludedRepos.length !== 1 ? 's' : ''} hidden
+                  <X className="size-3" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -579,10 +634,18 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
                 </select>
                 <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-zinc-600 pointer-events-none" />
               </div>
-              <button className="flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors">
-                <Filter className="size-3" />
-                filter
-              </button>
+              <div className="relative">
+                <select
+                  value={draftFilter}
+                  onChange={(e) => setDraftFilter(e.target.value as DraftFilter)}
+                  className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-mono rounded pl-2.5 pr-6 py-1 hover:border-zinc-700 focus:outline-none cursor-pointer transition-colors"
+                >
+                  <option value="all">all PRs</option>
+                  <option value="ready">ready</option>
+                  <option value="draft">drafts</option>
+                </select>
+                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-zinc-600 pointer-events-none" />
+              </div>
               <button className="text-xs font-mono text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors flex items-center gap-1.5">
                 <RefreshCw className="size-3" />
                 sync

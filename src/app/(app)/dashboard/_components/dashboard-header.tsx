@@ -61,8 +61,8 @@ function ViewToggle() {
   const setDashboardView = useUIStore((s) => s.setDashboardView);
 
   const views: ViewEntry[] = [
-    { key: 'list', icon: List, label: 'List view' },
     { key: 'ide', icon: LayoutGrid, label: 'Grid view' },
+    { key: 'list', icon: List, label: 'List view' },
   ];
 
   return (

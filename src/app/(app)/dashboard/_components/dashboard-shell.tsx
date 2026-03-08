@@ -1,6 +1,6 @@
 'use client';
 
-import { usePRList } from '@/features/github/hooks/use-pr-list';
+import { usePRList, type AccountStatus } from '@/features/github/hooks/use-pr-list';
 import { useUIStore } from '@/stores/ui-store';
 import { DashboardHeader } from './dashboard-header';
 import { DashboardKeyboard } from './dashboard-keyboard';
@@ -74,6 +74,26 @@ function EmptyState() {
 }
 
 // ---------------------------------------------------------------------------
+// Account error banner
+// ---------------------------------------------------------------------------
+
+function AccountErrorBanner({ statuses }: { statuses: AccountStatus[] }) {
+  const failed = statuses.filter((s) => s.status === 'error');
+  if (failed.length === 0) return null;
+
+  return (
+    <div className="mx-4 mt-2 rounded-md border border-yellow-900/50 bg-yellow-950/30 px-4 py-2.5 text-sm text-yellow-200/90">
+      {failed.map(({ login, error }) => (
+        <p key={login}>
+          Could not fetch PRs from <span className="font-medium">@{login}</span>
+          {' '}&mdash; {error ?? 'token may need re-linking'}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main shell
 // ---------------------------------------------------------------------------
 
@@ -83,11 +103,13 @@ export function DashboardShell() {
 
   const prs = data?.prs;
   const githubLogins = data?.githubLogins ?? [];
+  const accountStatuses = data?.accountStatuses ?? [];
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950">
       <DashboardHeader />
       <DashboardKeyboard />
+      <AccountErrorBanner statuses={accountStatuses} />
 
       {isLoading ? (
         dashboardView === 'ide' ? <IDEViewSkeleton /> : <ListViewSkeleton />

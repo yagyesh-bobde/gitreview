@@ -43,6 +43,7 @@ function transformReviewComment(gh: GitHubReviewComment): PRComment {
     line: gh.line,
     side: gh.side,
     inReplyToId: gh.in_reply_to_id ?? null,
+    diffHunk: gh.diff_hunk ?? null,
   };
 }
 
@@ -62,6 +63,7 @@ function transformIssueComment(gh: GitHubIssueComment): PRComment {
     line: null,
     side: null,
     inReplyToId: null,
+    diffHunk: null,
   };
 }
 
