@@ -1,8 +1,10 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Check,
+  CheckCircle2,
+  Circle,
   Columns2,
   Copy,
   FileCode2,
@@ -85,8 +87,13 @@ const STATUS_CONFIG: Record<
 export const DiffHeader = memo(function DiffHeader({
   fileDiff,
 }: DiffHeaderProps) {
-  const { viewMode, setViewMode } = useReviewStore();
+  const { viewMode, setViewMode, viewedFiles, toggleFileViewed } =
+    useReviewStore();
   const [copied, setCopied] = useState(false);
+  const isViewed = useMemo(
+    () => !!viewedFiles[fileDiff.filename],
+    [viewedFiles, fileDiff.filename],
+  );
 
   const status = getFileStatus(fileDiff);
   const stats = getChangeStats(fileDiff);
@@ -158,6 +165,26 @@ export const DiffHeader = memo(function DiffHeader({
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}
+      </button>
+
+      {/* Viewed toggle */}
+      <button
+        type="button"
+        className={cn(
+          'flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',
+          isViewed
+            ? 'bg-green-500/15 text-green-400'
+            : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+        )}
+        onClick={() => toggleFileViewed(fileDiff.filename)}
+        title={isViewed ? 'Mark as unviewed' : 'Mark as viewed'}
+      >
+        {isViewed ? (
+          <CheckCircle2 className="h-3.5 w-3.5" />
+        ) : (
+          <Circle className="h-3.5 w-3.5" />
+        )}
+        <span>Viewed</span>
       </button>
 
       {/* View mode toggle */}

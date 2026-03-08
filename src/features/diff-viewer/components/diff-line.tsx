@@ -27,6 +27,8 @@ interface DiffLineProps {
   onClick: (shiftKey: boolean) => void;
   /** 'unified' renders both line number columns; 'split' renders one */
   variant: 'unified' | 'split';
+  /** Called when the user clicks the "+" comment button in the gutter */
+  onCommentClick?: () => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export const DiffLine = memo(function DiffLine({
   isSelected,
   onClick,
   variant,
+  onCommentClick,
 }: DiffLineProps) {
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -76,12 +79,14 @@ export const DiffLine = memo(function DiffLine({
           newLineNumber={line.newLineNumber}
           type={line.type}
           onClick={() => onClick(false)}
+          onCommentClick={onCommentClick}
         />
       ) : (
         <SplitGutter
           lineNumber={line.oldLineNumber ?? line.newLineNumber}
           type={line.type}
           onClick={() => onClick(false)}
+          onCommentClick={onCommentClick}
         />
       )}
 

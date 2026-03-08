@@ -111,6 +111,8 @@ export interface PRComment {
   inReplyToId: number | null;
   /** GitHub's internal node ID */
   nodeId: string;
+  /** The diff hunk context around the commented line (review comments only) */
+  diffHunk: string | null;
 }
 
 // ---------------------------------------------------------------------------

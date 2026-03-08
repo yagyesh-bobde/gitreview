@@ -242,7 +242,7 @@ interface StandaloneCommentProps {
 
 export function StandaloneComment({ comment, className }: StandaloneCommentProps) {
   return (
-    <div className={cn('py-3 px-3', className)}>
+    <div className={cn('py-3 px-4', className)}>
       <CommentItem comment={comment} />
     </div>
   );

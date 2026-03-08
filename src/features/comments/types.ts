@@ -20,6 +20,8 @@ export interface CommentThread {
   line: number | null;
   /** Which side of the diff */
   side: PRCommentSide | null;
+  /** The diff hunk context from the root comment (for code snippet preview) */
+  diffHunk: string | null;
   /** All comments in this thread, ordered chronologically */
   comments: PRComment[];
 }

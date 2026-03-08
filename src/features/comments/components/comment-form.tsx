@@ -97,19 +97,19 @@ export function CommentForm({
   return (
     <div
       className={cn(
-        'rounded-lg border border-zinc-800 bg-zinc-900/50 transition-colors focus-within:border-zinc-700',
+        'rounded-lg border border-zinc-700/50 bg-zinc-900/80 transition-colors focus-within:border-zinc-600',
         compact && 'rounded-md',
       )}
     >
       {/* Tab bar */}
-      <div className="flex items-center gap-0 border-b border-zinc-800">
+      <div className="flex items-center gap-0 border-b border-zinc-700/40">
         <button
           type="button"
           onClick={() => setActiveTab('write')}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
             activeTab === 'write'
-              ? 'border-b-2 border-blue-500 text-zinc-200'
+              ? 'border-b-2 border-emerald-500 text-zinc-200'
               : 'text-zinc-500 hover:text-zinc-300',
           )}
         >
@@ -122,7 +122,7 @@ export function CommentForm({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
             activeTab === 'preview'
-              ? 'border-b-2 border-blue-500 text-zinc-200'
+              ? 'border-b-2 border-emerald-500 text-zinc-200'
               : 'text-zinc-500 hover:text-zinc-300',
           )}
         >
@@ -142,15 +142,15 @@ export function CommentForm({
             placeholder={placeholder}
             disabled={isSubmitting}
             className={cn(
-              'w-full resize-none bg-transparent text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none',
-              compact ? 'min-h-[60px] p-1.5' : 'min-h-[80px] p-2',
+              'w-full resize-none bg-transparent text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none',
+              compact ? 'min-h-[60px] p-1.5' : 'min-h-[64px] p-2',
             )}
             aria-label="Comment body"
           />
         ) : (
           <div
             className={cn(
-              compact ? 'min-h-[60px] p-1.5' : 'min-h-[80px] p-2',
+              compact ? 'min-h-[60px] p-1.5' : 'min-h-[64px] p-2',
             )}
           >
             {isEmpty ? (
@@ -167,20 +167,18 @@ export function CommentForm({
       {/* Footer */}
       <div
         className={cn(
-          'flex items-center justify-between border-t border-zinc-800 px-2 py-1.5',
+          'flex items-center justify-between border-t border-zinc-700/40 px-2.5 py-1.5',
           compact && 'px-1.5 py-1',
         )}
       >
-        <span className="text-[11px] text-zinc-600">
-          Markdown supported &middot;{' '}
-          <kbd className="rounded bg-zinc-800 px-1 py-0.5 font-mono text-[10px]">
+        <span className="text-[11px] text-zinc-500">
+          <kbd className="rounded bg-zinc-800/80 px-1 py-0.5 font-mono text-[10px] text-zinc-400">
             {typeof navigator !== 'undefined' &&
             navigator.platform?.includes('Mac')
               ? '\u2318'
               : 'Ctrl'}
             +Enter
-          </kbd>{' '}
-          to submit
+          </kbd>
         </span>
 
         <div className="flex items-center gap-1.5">

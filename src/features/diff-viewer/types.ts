@@ -65,7 +65,7 @@ export interface LineMapping {
 // Derived types for rendering (virtual scroller rows)
 // ---------------------------------------------------------------------------
 
-/** A flattened row for the virtual scroller — either a hunk header or a code line */
+/** A flattened row for the virtual scroller — hunk header, code line, or comment row */
 export type DiffRow =
   | { kind: 'hunk-header'; hunkIndex: number; header: string }
   | {
@@ -74,6 +74,18 @@ export type DiffRow =
       lineIndex: number;
       line: DiffLine;
       absoluteIndex: number;
+    }
+  | {
+      kind: 'comment-thread';
+      threadId: number;
+      anchorKey: string;
+    }
+  | {
+      kind: 'comment-form';
+      anchorKey: string;
+      path: string;
+      line: number;
+      side: import('@/types/pr').PRCommentSide;
     };
 
 /** A paired row for split view — left (old) and right (new) side */
@@ -85,7 +97,19 @@ export interface SplitRow {
 
 export type SplitDiffRow =
   | { kind: 'hunk-header'; hunkIndex: number; header: string }
-  | { kind: 'line'; hunkIndex: number; row: SplitRow };
+  | { kind: 'line'; hunkIndex: number; row: SplitRow }
+  | {
+      kind: 'comment-thread';
+      threadId: number;
+      anchorKey: string;
+    }
+  | {
+      kind: 'comment-form';
+      anchorKey: string;
+      path: string;
+      line: number;
+      side: import('@/types/pr').PRCommentSide;
+    };
 
 /** Highlighted tokens for a single line */
 export type HighlightedLine = ThemedToken[];

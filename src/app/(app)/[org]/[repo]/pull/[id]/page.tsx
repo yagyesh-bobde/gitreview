@@ -4,11 +4,10 @@ import { use, useEffect, useCallback } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { FileTree } from '@/features/file-tree/components/file-tree';
-import { DiffViewer } from '@/features/diff-viewer/components/diff-viewer';
+import { MultiFileDiffViewer } from '@/features/diff-viewer/components/multi-file-diff-viewer';
 import { PRMetadataBar } from './pr-metadata-bar';
 import { usePR } from '@/features/github/hooks/use-pr';
 import { usePRFiles } from '@/features/github/hooks/use-pr-files';
-import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
 import { useReviewStore } from '@/stores/review-store';
 import { useUIStore } from '@/stores/ui-store';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
@@ -29,7 +28,6 @@ export default function PullRequestPage({ params }: Props) {
   const prNumber = Number(id);
   const pr = usePR(org, repo, prNumber);
   const files = usePRFiles(org, repo, prNumber);
-  const diff = usePRDiff(org, repo, prNumber, activeFile);
 
   // Auto-select first file when files load
   useEffect(() => {
@@ -41,6 +39,11 @@ export default function PullRequestPage({ params }: Props) {
   const handleFileSelect = useCallback(
     (path: string) => {
       setActiveFile(path);
+      // Scroll the corresponding diff section into view
+      const el = document.getElementById(`diff-file-${CSS.escape(path)}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     },
     [setActiveFile],
   );
@@ -95,7 +98,13 @@ export default function PullRequestPage({ params }: Props) {
                 ) : null
               }
             >
-              <DiffViewer fileDiff={diff.data ?? null} isLoading={diff.isLoading} />
+              <MultiFileDiffViewer
+                files={files.data ?? []}
+                org={org}
+                repo={repo}
+                prNumber={prNumber}
+                commitId={pr.data?.head.sha}
+              />
             </SidebarLayout>
           </div>
 

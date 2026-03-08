@@ -43,15 +43,23 @@ export async function GET() {
       }),
     );
 
-    // Merge results, deduplicate by PR id (keep first occurrence)
+    // Build per-account status reports and merge PR results
+    const accountStatuses: Array<{ login: string; status: 'ok' | 'error'; error?: string }> = [];
     const seen = new Set<number>();
     const merged: PullRequest[] = [];
 
-    for (const result of results) {
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const login = accounts[i].login;
+
       if (result.status === 'rejected') {
-        console.warn('[api/github/prs] Account fetch failed:', result.reason);
+        const reason = result.reason instanceof Error ? result.reason.message : String(result.reason);
+        console.warn(`[api/github/prs] Account @${login} fetch failed:`, result.reason);
+        accountStatuses.push({ login, status: 'error', error: reason });
         continue;
       }
+
+      accountStatuses.push({ login, status: 'ok' });
       for (const pr of result.value) {
         if (seen.has(pr.id)) continue;
         seen.add(pr.id);
@@ -66,7 +74,7 @@ export async function GET() {
 
     const githubLogins = accounts.map((a) => a.login);
 
-    return NextResponse.json({ prs: merged, githubLogins });
+    return NextResponse.json({ prs: merged, githubLogins, accountStatuses });
   } catch (err) {
     if (err instanceof GitHubApiError) {
       return NextResponse.json(

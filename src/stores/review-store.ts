@@ -24,12 +24,17 @@ interface ReviewStore {
   /** Set of open (expanded) comment threads, keyed as "path:line:side" */
   openCommentThreads: Set<string>;
 
+  /** Files the user has marked as "viewed", keyed by file path */
+  viewedFiles: Record<string, boolean>;
+
   setActiveFile: (file: string | null) => void;
   setViewMode: (mode: DiffViewMode) => void;
   setSelectedLines: (lines: LineSelection | null) => void;
   setPendingCommentAnchor: (anchor: CommentAnchor | null) => void;
   clearPendingCommentAnchor: () => void;
   toggleCommentThread: (threadKey: string) => void;
+  toggleFileViewed: (path: string) => void;
+  clearViewedFiles: () => void;
 }
 
 export const useReviewStore = create<ReviewStore>((set) => ({
@@ -38,6 +43,7 @@ export const useReviewStore = create<ReviewStore>((set) => ({
   selectedLines: null,
   pendingCommentAnchor: null,
   openCommentThreads: new Set<string>(),
+  viewedFiles: {},
 
   setActiveFile: (file) =>
     set({ activeFile: file, selectedLines: null }),
@@ -62,4 +68,17 @@ export const useReviewStore = create<ReviewStore>((set) => ({
       }
       return { openCommentThreads: next };
     }),
+
+  toggleFileViewed: (path) =>
+    set((state) => {
+      const next = { ...state.viewedFiles };
+      if (next[path]) {
+        delete next[path];
+      } else {
+        next[path] = true;
+      }
+      return { viewedFiles: next };
+    }),
+
+  clearViewedFiles: () => set({ viewedFiles: {} }),
 }));
