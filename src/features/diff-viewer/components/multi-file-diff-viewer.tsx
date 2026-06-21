@@ -4,6 +4,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -12,8 +13,9 @@ import { CheckCircle2, ChevronDown, ChevronRight, Circle, Loader2 } from 'lucide
 import { cn } from '@/lib/utils';
 import { useReviewStore } from '@/stores/review-store';
 import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
+import { buildFileDiff } from '../lib/parse-diff';
 import type { PRFile } from '@/types/pr';
-import type { FileDiff } from '../types';
+import type { FileDiff, DiffHunk } from '../types';
 
 import { DiffEmptyState } from './diff-empty-state';
 import { InlineDiff } from './inline-diff';
@@ -26,6 +28,13 @@ import { InlineDiff } from './inline-diff';
 const LARGE_FILE_LINE_THRESHOLD = 500;
 /** Max height (px) for large file sections before user expands */
 const LARGE_FILE_MAX_HEIGHT = 600;
+/**
+ * When a large file is collapsed we only render this many lines into the DOM
+ * (more than enough to fill LARGE_FILE_MAX_HEIGHT). Previously the full file —
+ * thousands of lines — was rendered and Shiki-highlighted, then hidden by a CSS
+ * clip, which is the main cause of render lag on big PRs.
+ */
+const COLLAPSED_RENDER_LINES = 60;
 /** IntersectionObserver rootMargin — prefetch diffs 600px before they enter viewport */
 const PREFETCH_MARGIN = '600px';
 /** IntersectionObserver threshold for header tracking */
@@ -199,7 +208,16 @@ const SingleFileDiffSection = memo(function SingleFileDiffSection({
   const sectionRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Collapse follows "viewed": marking a file viewed (here or via a folder
+  // toggle in the tree) collapses it; unmarking expands it. The manual
+  // chevron can still override in between (the effect only re-syncs when the
+  // viewed flag actually changes).
+  const isViewed = useReviewStore((s) => !!s.viewedFiles[file.filename]);
+  const [isCollapsed, setIsCollapsed] = useState(isViewed);
+  useEffect(() => {
+    setIsCollapsed(isViewed);
+  }, [isViewed]);
 
   // Register the header ref for active-file tracking
   useEffect(() => {
@@ -398,8 +416,23 @@ const FileDiffContent = memo(function FileDiffContent({
   prNumber,
   commitId,
 }: FileDiffContentProps) {
-  const diff = usePRDiff(org, repo, prNumber, file.filename);
   const viewMode = useReviewStore((s) => s.viewMode);
+
+  // The /files response already includes each file's `patch`, so we parse the
+  // diff on the client with zero extra network round-trips. Only files GitHub
+  // omitted a patch for (very large or binary) fall back to the per-file
+  // /diff endpoint. This eliminates the N+1 fetch (one request per file).
+  const hasPatch = file.patch !== null;
+  const localDiff = useMemo<FileDiff | null>(
+    () =>
+      hasPatch ? buildFileDiff(file.filename, file.patch, file.previousFilename) : null,
+    [hasPatch, file.filename, file.patch, file.previousFilename],
+  );
+  const remoteDiff = usePRDiff(org, repo, prNumber, hasPatch ? null : file.filename);
+
+  const diff = hasPatch
+    ? { data: localDiff, isLoading: false, error: null as Error | null, refetch: () => {} }
+    : remoteDiff;
 
   if (diff.isLoading) {
     return <FileDiffSkeleton />;
@@ -478,22 +511,25 @@ function FileDiffBody({
     totalLines <= LARGE_FILE_LINE_THRESHOLD,
   );
   const isLargeFile = totalLines > LARGE_FILE_LINE_THRESHOLD;
+  const isCollapsedLarge = isLargeFile && !isExpanded;
+
+  // For a collapsed large file, only render a small slice of lines into the DOM
+  // instead of the whole file (which would then be clipped by CSS anyway).
+  const renderedDiff = useMemo(
+    () => (isCollapsedLarge ? truncateFileDiff(fileDiff, COLLAPSED_RENDER_LINES) : fileDiff),
+    [isCollapsedLarge, fileDiff],
+  );
 
   return (
     <div>
       <div
-        className={cn(
-          'relative',
-          isLargeFile && !isExpanded && 'overflow-hidden',
-        )}
+        className={cn('relative', isCollapsedLarge && 'overflow-hidden')}
         style={
-          isLargeFile && !isExpanded
-            ? { maxHeight: `${LARGE_FILE_MAX_HEIGHT}px` }
-            : undefined
+          isCollapsedLarge ? { maxHeight: `${LARGE_FILE_MAX_HEIGHT}px` } : undefined
         }
       >
         <InlineDiff
-          fileDiff={fileDiff}
+          fileDiff={renderedDiff}
           viewMode={viewMode}
           org={org}
           repo={repo}
@@ -502,12 +538,12 @@ function FileDiffBody({
         />
 
         {/* Fade overlay for truncated large files */}
-        {isLargeFile && !isExpanded && (
+        {isCollapsedLarge && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-zinc-950 to-transparent" />
         )}
       </div>
 
-      {isLargeFile && !isExpanded && (
+      {isCollapsedLarge && (
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
@@ -519,6 +555,28 @@ function FileDiffBody({
       )}
     </div>
   );
+}
+
+/**
+ * Return a copy of a FileDiff containing only the first `maxLines` diff lines
+ * (whole hunks where possible). Used to avoid rendering thousands of lines for a
+ * collapsed large file that's visually clipped anyway.
+ */
+function truncateFileDiff(fileDiff: FileDiff, maxLines: number): FileDiff {
+  const hunks: DiffHunk[] = [];
+  let count = 0;
+  for (const hunk of fileDiff.hunks) {
+    if (count >= maxLines) break;
+    const remaining = maxLines - count;
+    if (hunk.lines.length <= remaining) {
+      hunks.push(hunk);
+      count += hunk.lines.length;
+    } else {
+      hunks.push({ ...hunk, lines: hunk.lines.slice(0, remaining) });
+      break;
+    }
+  }
+  return { ...fileDiff, hunks };
 }
 
 // ---------------------------------------------------------------------------

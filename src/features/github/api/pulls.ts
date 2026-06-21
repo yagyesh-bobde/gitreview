@@ -1,8 +1,9 @@
 /**
  * GitHub Pull Request API functions.
  *
- * These are server-side functions that call the GitHub REST API
- * and transform responses into app-level types.
+ * These are server-side functions that call the GitHub API and transform
+ * responses into app-level types. The PR list uses GraphQL (one request);
+ * single-PR detail/files/diff use REST + Redis caching.
  */
 
 import type {
@@ -18,6 +19,7 @@ import type {
 } from '@/types/pr';
 import type { FileDiff } from '@/types/diff';
 import { githubRequest, githubPaginatedRequest, githubRawDiff } from './client';
+import { graphqlRequest } from './graphql-client';
 import { buildFileDiff } from '@/features/diff-viewer/lib/parse-diff';
 import {
   getCached,
@@ -102,353 +104,310 @@ function transformFile(gh: GitHubPRFile): PRFile {
 }
 
 // ---------------------------------------------------------------------------
-// API functions
+// GraphQL PR list
 // ---------------------------------------------------------------------------
 
+interface GqlActor {
+  login: string;
+  avatarUrl: string;
+  url: string;
+}
+
+interface GqlRepo {
+  name: string;
+  owner: { login: string };
+  nameWithOwner: string;
+}
+
+interface GqlLabel {
+  name: string;
+  color: string;
+  description: string | null;
+}
+
+interface GqlReviewRequestNode {
+  requestedReviewer: {
+    __typename: string;
+    login?: string;
+    avatarUrl?: string;
+    name?: string;
+  } | null;
+}
+
+interface GqlPullRequest {
+  __typename: string;
+  databaseId: number | null;
+  number: number;
+  title: string;
+  body: string | null;
+  state: 'OPEN' | 'CLOSED' | 'MERGED';
+  isDraft: boolean;
+  merged: boolean;
+  mergedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  additions: number;
+  deletions: number;
+  changedFiles: number;
+  mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN';
+  url: string;
+  author: GqlActor | null;
+  baseRefName: string;
+  baseRefOid: string;
+  baseRepository: GqlRepo | null;
+  headRefName: string;
+  headRefOid: string;
+  headRepository: GqlRepo | null;
+  labels: { nodes: GqlLabel[] } | null;
+  reviewRequests: { nodes: GqlReviewRequestNode[] } | null;
+}
+
+interface SearchBlock {
+  nodes: Array<Partial<GqlPullRequest>>;
+}
+
+interface ListUserPRsResponse {
+  authored: SearchBlock;
+  reviewRequested: SearchBlock;
+  involved: SearchBlock;
+}
+
+const PR_FRAGMENT = /* GraphQL */ `
+  fragment PrFields on PullRequest {
+    __typename
+    databaseId
+    number
+    title
+    body
+    state
+    isDraft
+    merged
+    mergedAt
+    createdAt
+    updatedAt
+    additions
+    deletions
+    changedFiles
+    mergeable
+    url
+    author { login avatarUrl url }
+    baseRefName
+    baseRefOid
+    baseRepository { name owner { login } nameWithOwner }
+    headRefName
+    headRefOid
+    headRepository { name owner { login } nameWithOwner }
+    labels(first: 20) { nodes { name color description } }
+    reviewRequests(first: 20) {
+      nodes {
+        requestedReviewer {
+          __typename
+          ... on User { login avatarUrl }
+          ... on Team { name avatarUrl }
+        }
+      }
+    }
+  }
+`;
+
+const LIST_USER_PRS_QUERY = /* GraphQL */ `
+  query ListUserPRs($first: Int!) {
+    authored: search(query: "is:pr is:open author:@me sort:updated-desc", type: ISSUE, first: $first) {
+      nodes { ...PrFields }
+    }
+    reviewRequested: search(query: "is:pr is:open review-requested:@me sort:updated-desc", type: ISSUE, first: $first) {
+      nodes { ...PrFields }
+    }
+    involved: search(query: "is:pr is:open involves:@me sort:updated-desc", type: ISSUE, first: $first) {
+      nodes { ...PrFields }
+    }
+  }
+  ${PR_FRAGMENT}
+`;
+
+/** Stable, small numeric id for a label name (used only as a UI key). */
+function labelId(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function mapMergeable(m: GqlPullRequest['mergeable']): boolean | null {
+  if (m === 'MERGEABLE') return true;
+  if (m === 'CONFLICTING') return false;
+  return null;
+}
+
+function mapState(pr: GqlPullRequest): PullRequestState {
+  if (pr.merged || pr.state === 'MERGED') return 'merged';
+  if (pr.state === 'CLOSED') return 'closed';
+  return 'open';
+}
+
+function transformGqlPR(pr: GqlPullRequest): PullRequest | null {
+  if (pr.databaseId == null) return null;
+
+  const repo = pr.baseRepository ?? pr.headRepository;
+  const owner = repo?.owner.login ?? '';
+  const name = repo?.name ?? '';
+  const fullName = repo?.nameWithOwner ?? (owner && name ? `${owner}/${name}` : '');
+
+  const reviewers: PullRequestReviewer[] = (pr.reviewRequests?.nodes ?? [])
+    .map((n) => n.requestedReviewer)
+    .filter((r): r is NonNullable<GqlReviewRequestNode['requestedReviewer']> => r != null)
+    .map((r) => ({
+      login: r.login ?? r.name ?? 'unknown',
+      avatarUrl: r.avatarUrl ?? '',
+    }));
+
+  return {
+    id: pr.databaseId,
+    number: pr.number,
+    title: pr.title,
+    body: pr.body,
+    state: mapState(pr),
+    author: {
+      login: pr.author?.login ?? 'ghost',
+      avatarUrl: pr.author?.avatarUrl ?? '',
+      url: pr.author?.url ?? '',
+    },
+    base: {
+      ref: pr.baseRefName,
+      sha: pr.baseRefOid,
+      repo: { owner, name, fullName },
+    },
+    head: {
+      ref: pr.headRefName,
+      sha: pr.headRefOid,
+      repo: {
+        owner: pr.headRepository?.owner.login ?? owner,
+        name: pr.headRepository?.name ?? name,
+        fullName: pr.headRepository?.nameWithOwner ?? fullName,
+      },
+    },
+    createdAt: pr.createdAt,
+    updatedAt: pr.updatedAt,
+    mergedAt: pr.mergedAt,
+    additions: pr.additions ?? 0,
+    deletions: pr.deletions ?? 0,
+    changedFiles: pr.changedFiles ?? 0,
+    labels: (pr.labels?.nodes ?? []).map((l) => ({
+      id: labelId(l.name),
+      name: l.name,
+      color: l.color,
+      description: l.description,
+    })),
+    reviewers,
+    mergeable: mapMergeable(pr.mergeable),
+    draft: pr.isDraft,
+    // GraphQL gives the HTML url; reconstruct the REST api url for parity.
+    url: fullName ? `https://api.github.com/repos/${fullName}/pulls/${pr.number}` : '',
+    htmlUrl: pr.url,
+  };
+}
+
 /**
- * List PRs relevant to the authenticated user.
+ * List open PRs relevant to the authenticated user via a single GraphQL
+ * request: three aliased `search` queries (authored, review-requested,
+ * involves) returning the fields the dashboard needs. Results are
+ * deduplicated by PR databaseId.
  *
- * Strategy (two complementary paths that run in parallel):
+ * This replaces the previous REST fan-out (discover all repos + orgs, then
+ * up to ~50 per-repo `/pulls` calls plus 3 Search calls per account), which
+ * could cost 50-70 GitHub requests per account and was unusable on Vercel.
  *
- * 1. **Personal search queries** — `author:@me`, `review-requested:@me`,
- *    `involves:@me` via the Search API. Catches PRs where the user is
- *    directly involved regardless of repo visibility.
- *
- * 2. **Repo-level PR fetch** — Discover ALL repos the user can access
- *    (personal + org) via `/user/repos` with explicit affiliation, then
- *    supplement by discovering orgs and fetching their repos directly.
- *    For each discovered repo, fetch open PRs via the REST pulls endpoint
- *    (`GET /repos/{owner}/{repo}/pulls`). This catches team PRs in org
- *    repos where the user is NOT personally involved.
- *
- * Results are deduplicated by PR id.
+ * Org-wide discovery of PRs the user is NOT involved in is intentionally not
+ * covered here -- that requires a GitHub App + webhooks (see ARCHITECTURE).
+ * A legacy repo-scan path remains available behind GITHUB_ENABLE_REPO_SCAN
+ * for environments that still need it.
  */
 export async function listUserPRs(token: string): Promise<PullRequest[]> {
   const TAG = '[listUserPRs]';
 
-  // -------------------------------------------------------------------------
-  // Step 1: Discover repos the user has access to
-  // -------------------------------------------------------------------------
-  type RepoInfo = { full_name: string; owner: { login: string }; open_issues_count: number };
-
-  // Fetch repos with explicit affiliation to maximize coverage.
-  // owner = user's own repos, collaborator = repos user was added to,
-  // organization_member = repos in orgs the user belongs to.
-  let userRepos: RepoInfo[] = [];
+  let data: ListUserPRsResponse;
   try {
-    const reposResponse = await githubPaginatedRequest<RepoInfo>(
-      '/user/repos?affiliation=owner,collaborator,organization_member&sort=pushed&direction=desc&per_page=100',
-      { token },
-      3, // up to 300 repos
-    );
-    userRepos = reposResponse.data;
-    console.log(`${TAG} /user/repos returned ${userRepos.length} repos`);
+    data = await graphqlRequest<ListUserPRsResponse>(token, LIST_USER_PRS_QUERY, { first: 100 });
   } catch (err) {
-    console.warn(`${TAG} Failed to fetch /user/repos:`, err);
+    console.error(`${TAG} GraphQL query failed:`, err instanceof Error ? err.message : err);
+    throw err;
   }
 
-  // Discover orgs via two methods:
-  // 1. Extract unique owner names from fetched repos
-  // 2. Directly call /user/orgs (requires read:org scope for private orgs,
-  //    but works without it for public orgs)
-  const userRepoFullNames = new Set(userRepos.map((r) => r.full_name));
-  const orgNames = new Set<string>();
-  for (const repo of userRepos) {
-    orgNames.add(repo.owner.login);
-  }
-
-  // Also discover orgs directly via the /user/orgs endpoint.
-  // This is critical for finding orgs whose repos didn't appear in /user/repos.
-  try {
-    const orgsResponse = await githubRequest<Array<{ login: string }>>(
-      '/user/orgs?per_page=100',
-      { token },
-    );
-    for (const org of orgsResponse.data) {
-      orgNames.add(org.login);
-    }
-    console.log(`${TAG} /user/orgs returned ${orgsResponse.data.length} orgs: [${orgsResponse.data.map((o) => o.login).join(', ')}]`);
-  } catch (err) {
-    console.warn(`${TAG} /user/orgs failed (may need read:org scope):`, err instanceof Error ? err.message : err);
-  }
-
-  // For each discovered org, try fetching their repos via /orgs/{org}/repos.
-  // This endpoint works with the `repo` scope and catches repos that
-  // /user/repos might miss (e.g. repos accessible via team-level permissions).
-  // We skip orgs that are clearly the user's personal account by checking
-  // if we already have enough repos from them (heuristic, not perfect).
-  const orgRepoPromises: Array<Promise<{ org: string; repos: RepoInfo[] }>> = [];
-  for (const org of orgNames) {
-    orgRepoPromises.push(
-      githubPaginatedRequest<RepoInfo>(
-        `/orgs/${org}/repos?type=all&sort=pushed&direction=desc&per_page=100`,
-        { token },
-        2, // up to 200 repos per org
-      )
-        .then((res) => ({ org, repos: res.data }))
-        .catch(() => {
-          // 404 = personal account (not an org), which is expected.
-          // Other errors are non-fatal; we already have /user/repos data.
-          return { org, repos: [] as RepoInfo[] };
-        }),
-    );
-  }
-
-  const orgResults = await Promise.allSettled(orgRepoPromises);
-  let orgReposDiscovered = 0;
-  for (const result of orgResults) {
-    if (result.status === 'fulfilled') {
-      for (const repo of result.value.repos) {
-        if (!userRepoFullNames.has(repo.full_name)) {
-          userRepos.push(repo);
-          userRepoFullNames.add(repo.full_name);
-          orgReposDiscovered++;
-        }
-      }
-      if (result.value.repos.length > 0) {
-        console.log(`${TAG} /orgs/${result.value.org}/repos returned ${result.value.repos.length} repos (${orgReposDiscovered} new)`);
-      }
-    }
-  }
-
-  console.log(`${TAG} Total unique repos discovered: ${userRepoFullNames.size}`);
-
-  // -------------------------------------------------------------------------
-  // Step 2: Fetch PRs from two parallel paths
-  // -------------------------------------------------------------------------
-
-  // Path A: Personal search queries (catches PRs in repos we might not discover)
-  const searchPromises: Array<Promise<{ data: { total_count: number; items: GitHubPullRequest[] } }>> = [
-    githubRequest<{ total_count: number; items: GitHubPullRequest[] }>(
-      '/search/issues?q=type:pr+state:open+author:@me&sort=updated&order=desc&per_page=100',
-      { token },
-    ),
-    githubRequest<{ total_count: number; items: GitHubPullRequest[] }>(
-      '/search/issues?q=type:pr+state:open+review-requested:@me&sort=updated&order=desc&per_page=100',
-      { token },
-    ),
-    githubRequest<{ total_count: number; items: GitHubPullRequest[] }>(
-      '/search/issues?q=type:pr+state:open+involves:@me&sort=updated&order=desc&per_page=100',
-      { token },
-    ),
-  ];
-
-  // Path B: Direct REST pulls endpoint for repos that might have open PRs.
-  // We use GET /repos/{owner}/{repo}/pulls (core rate limit: 5000/hr) instead
-  // of the search API (30/min) for reliability and speed.
-  //
-  // We do NOT filter by open_issues_count because:
-  // - GitHub's count can be stale / cached
-  // - Repos with Issues disabled may report 0 even with open PRs
-  // - The cost of a 404 or empty response is negligible vs missing PRs
-  // The repos are already sorted by pushed_at desc, so the cap below
-  // naturally prioritizes active repos.
-  const reposToQuery = userRepos;
-
-  // Cap at 50 repos to avoid excessive API calls. Prioritize recently pushed.
-  // (The repos are already sorted by pushed desc from the API.)
-  const MAX_REPO_QUERIES = 50;
-  const cappedRepos = reposToQuery.slice(0, MAX_REPO_QUERIES);
-  console.log(`${TAG} Querying ${cappedRepos.length} repos for open PRs (of ${reposToQuery.length} candidates)`);
-
-  const repoPRPromises = cappedRepos.map((repo) =>
-    githubPaginatedRequest<GitHubPullRequest>(
-      `/repos/${repo.full_name}/pulls?state=open&sort=updated&direction=desc&per_page=100`,
-      { token },
-      1, // only first page -- if a repo has 100+ open PRs, tough luck
-    )
-      .then((res) => {
-        if (res.data.length > 0) {
-          console.log(`${TAG}   ${repo.full_name}: ${res.data.length} open PRs`);
-        }
-        return res.data;
-      })
-      .catch((err) => {
-        // Non-fatal: might be a repo we lost access to
-        console.warn(`${TAG}   ${repo.full_name}: failed to fetch PRs:`, err instanceof Error ? err.message : err);
-        return [] as GitHubPullRequest[];
-      }),
-  );
-
-  // Run both paths in parallel
-  const [searchResults, ...repoPRResults] = await Promise.all([
-    Promise.allSettled(searchPromises),
-    ...repoPRPromises,
-  ]);
-
-  // -------------------------------------------------------------------------
-  // Step 3: Collect and deduplicate
-  // -------------------------------------------------------------------------
   const seen = new Set<number>();
   const prs: PullRequest[] = [];
 
-  // Helper to add a PR from the search API (partial fields)
-  function addSearchItem(item: GitHubPullRequest): void {
-    if (seen.has(item.id)) return;
-    seen.add(item.id);
-
-    let repoOwner = '';
-    let repoName = '';
-    let repoFullName = '';
-
-    if (item.base?.repo) {
-      repoOwner = item.base.repo.owner.login;
-      repoName = item.base.repo.name;
-      repoFullName = item.base.repo.full_name;
-    } else if (item.repository_url) {
-      const parts = item.repository_url.split('/');
-      repoOwner = parts[parts.length - 2] ?? '';
-      repoName = parts[parts.length - 1] ?? '';
-      repoFullName = `${repoOwner}/${repoName}`;
-    } else if (item.html_url) {
-      const match = item.html_url.match(/github\.com\/([^/]+)\/([^/]+)/);
-      if (match) {
-        repoOwner = match[1];
-        repoName = match[2];
-        repoFullName = `${repoOwner}/${repoName}`;
-      }
-    }
-
-    const repoInfo = { owner: repoOwner, name: repoName, fullName: repoFullName };
-
-    prs.push({
-      id: item.id,
-      number: item.number,
-      title: item.title,
-      body: item.body,
-      state: item.merged_at ? 'merged' : item.state === 'closed' ? 'closed' : 'open',
-      author: {
-        login: item.user.login,
-        avatarUrl: item.user.avatar_url,
-        url: item.user.html_url,
-      },
-      base: item.base
-        ? {
-            ref: item.base.ref,
-            sha: item.base.sha,
-            repo: {
-              owner: item.base.repo.owner.login,
-              name: item.base.repo.name,
-              fullName: item.base.repo.full_name,
-            },
-          }
-        : { ref: '', sha: '', repo: repoInfo },
-      head: item.head
-        ? {
-            ref: item.head.ref,
-            sha: item.head.sha,
-            repo: {
-              owner: item.head.repo.owner.login,
-              name: item.head.repo.name,
-              fullName: item.head.repo.full_name,
-            },
-          }
-        : { ref: '', sha: '', repo: repoInfo },
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-      mergedAt: item.merged_at ?? null,
-      additions: item.additions ?? 0,
-      deletions: item.deletions ?? 0,
-      changedFiles: item.changed_files ?? 0,
-      labels: (item.labels ?? []).map((l) => ({
-        id: l.id,
-        name: l.name,
-        color: l.color,
-        description: l.description,
-      })),
-      reviewers: (item.requested_reviewers ?? []).map((r) => ({
-        login: r.login,
-        avatarUrl: r.avatar_url,
-      })),
-      mergeable: item.mergeable ?? null,
-      draft: item.draft ?? false,
-      url: item.url ?? '',
-      htmlUrl: item.html_url ?? '',
-    });
-  }
-
-  // Helper to add a PR from the REST pulls endpoint (full fields)
-  function addRestPR(item: GitHubPullRequest): void {
-    if (seen.has(item.id)) return;
-    seen.add(item.id);
-    prs.push({
-      id: item.id,
-      number: item.number,
-      title: item.title,
-      body: item.body,
-      state: item.merged_at ? 'merged' : item.state === 'closed' ? 'closed' : 'open',
-      author: {
-        login: item.user.login,
-        avatarUrl: item.user.avatar_url,
-        url: item.user.html_url,
-      },
-      base: {
-        ref: item.base.ref,
-        sha: item.base.sha,
-        repo: {
-          owner: item.base.repo.owner.login,
-          name: item.base.repo.name,
-          fullName: item.base.repo.full_name,
-        },
-      },
-      head: {
-        ref: item.head.ref,
-        sha: item.head.sha,
-        repo: {
-          owner: item.head.repo.owner.login,
-          name: item.head.repo.name,
-          fullName: item.head.repo.full_name,
-        },
-      },
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-      mergedAt: item.merged_at ?? null,
-      additions: item.additions ?? 0,
-      deletions: item.deletions ?? 0,
-      changedFiles: item.changed_files ?? 0,
-      labels: (item.labels ?? []).map((l) => ({
-        id: l.id,
-        name: l.name,
-        color: l.color,
-        description: l.description,
-      })),
-      reviewers: (item.requested_reviewers ?? []).map((r) => ({
-        login: r.login,
-        avatarUrl: r.avatar_url,
-      })),
-      mergeable: item.mergeable ?? null,
-      draft: item.draft ?? false,
-      url: item.url ?? '',
-      htmlUrl: item.html_url ?? '',
-    });
-  }
-
-  // Process search results
-  let searchPRCount = 0;
-  for (const result of searchResults as PromiseSettledResult<{ data: { total_count: number; items: GitHubPullRequest[] } }>[]) {
-    if (result.status === 'fulfilled') {
-      for (const item of result.value.data.items) {
-        addSearchItem(item);
-        searchPRCount++;
-      }
-    } else {
-      console.warn(`${TAG} Search query failed:`, result.reason);
+  const blocks: SearchBlock[] = [data.authored, data.reviewRequested, data.involved];
+  for (const block of blocks) {
+    for (const node of block?.nodes ?? []) {
+      // search returns a union; non-PR nodes (or partial results) lack __typename.
+      if (node.__typename !== 'PullRequest') continue;
+      const transformed = transformGqlPR(node as GqlPullRequest);
+      if (!transformed) continue;
+      if (seen.has(transformed.id)) continue;
+      seen.add(transformed.id);
+      prs.push(transformed);
     }
   }
-  console.log(`${TAG} Search API returned ${searchPRCount} items (${prs.length} unique so far)`);
 
-  // Process REST pulls results
-  let restPRCount = 0;
-  const beforeRest = prs.length;
-  for (const prList of repoPRResults as GitHubPullRequest[][]) {
-    for (const item of prList) {
-      addRestPR(item);
-      restPRCount++;
+  console.log(`${TAG} GraphQL returned ${prs.length} unique open PRs`);
+
+  // Optional legacy path: enumerate accessible repos and fetch their open PRs.
+  // Off by default -- it's the expensive fan-out that motivated the GraphQL
+  // rewrite. Enable only if you need org-wide PRs the user isn't involved in.
+  if (process.env.GITHUB_ENABLE_REPO_SCAN === 'true') {
+    try {
+      await supplementWithRepoScan(token, prs, seen);
+    } catch (err) {
+      console.warn(`${TAG} repo scan failed (non-fatal):`, err instanceof Error ? err.message : err);
     }
   }
-  console.log(`${TAG} REST pulls returned ${restPRCount} items (${prs.length - beforeRest} new, ${prs.length} total unique)`);
 
+  // Most-recently-updated first.
+  prs.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   return prs;
+}
+
+/**
+ * Legacy REST repo-scan, gated behind GITHUB_ENABLE_REPO_SCAN. Discovers repos
+ * via /user/repos (recently pushed) and fetches their open PRs, appending any
+ * not already seen. Capped to bound the fan-out.
+ */
+async function supplementWithRepoScan(
+  token: string,
+  prs: PullRequest[],
+  seen: Set<number>,
+): Promise<void> {
+  const TAG = '[listUserPRs:repoScan]';
+  type RepoInfo = { full_name: string; owner: { login: string } };
+
+  const reposResponse = await githubPaginatedRequest<RepoInfo>(
+    '/user/repos?affiliation=owner,collaborator,organization_member&sort=pushed&direction=desc&per_page=100',
+    { token },
+    1,
+  );
+  const MAX_REPO_QUERIES = 30;
+  const repos = reposResponse.data.slice(0, MAX_REPO_QUERIES);
+  console.log(`${TAG} scanning ${repos.length} repos for open PRs`);
+
+  const results = await Promise.allSettled(
+    repos.map((repo) =>
+      githubPaginatedRequest<GitHubPullRequest>(
+        `/repos/${repo.full_name}/pulls?state=open&sort=updated&direction=desc&per_page=100`,
+        { token },
+        1,
+      ).then((res) => res.data),
+    ),
+  );
+
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    for (const item of result.value) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      prs.push(transformPR(item));
+    }
+  }
 }
 
 /**
@@ -464,17 +423,15 @@ export async function fetchPR(
   const cached = await getCached<PullRequest>(cacheKeyStr);
   if (cached) return cached;
 
-  const { data } = await githubRequest<GitHubPullRequest>(
-    `/repos/${owner}/${repo}/pulls/${prNumber}`,
-    { token },
-  );
-
-  // Fetch reviews to populate reviewer states
-  const { data: reviews } = await githubPaginatedRequest<GitHubReview>(
-    `/repos/${owner}/${repo}/pulls/${prNumber}/reviews`,
-    { token },
-    5,
-  );
+  // Fetch the PR and its reviews concurrently -- they're independent.
+  const [{ data }, { data: reviews }] = await Promise.all([
+    githubRequest<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls/${prNumber}`, { token }),
+    githubPaginatedRequest<GitHubReview>(
+      `/repos/${owner}/${repo}/pulls/${prNumber}/reviews`,
+      { token },
+      5,
+    ),
+  ]);
 
   const pr = transformPR(data);
 
@@ -528,9 +485,10 @@ export async function fetchPRFiles(
 /**
  * Fetch and parse the diff for a single file in a PR.
  *
- * Strategy: We first check if the file's patch is available from the files
- * endpoint (cached). If not, we fetch the full PR diff and extract the
- * relevant file section.
+ * Strategy: prefer the per-file `patch` from the files endpoint (often already
+ * cached). When that's null (large files), fall back to the full PR diff -- but
+ * parse it ONCE and cache EVERY file's diff, so subsequent large-file requests
+ * are cache hits instead of re-downloading the entire diff per file.
  */
 export async function fetchFileDiff(
   token: string,
@@ -553,8 +511,8 @@ export async function fetchFileDiff(
     return diff;
   }
 
-  // For large files where patch is null, fetch the full PR diff
-  // and extract this file's section
+  // For large files where patch is null, fetch the full PR diff ONCE and
+  // parse every file, caching each so we never re-download for sibling files.
   const rawDiff = await githubRawDiff(
     `/repos/${owner}/${repo}/pulls/${prNumber}`,
     { token },
@@ -562,19 +520,19 @@ export async function fetchFileDiff(
 
   const { parseFullDiff } = await import('@/features/diff-viewer/lib/parse-diff');
   const allFileDiffs = parseFullDiff(rawDiff);
-  const fileDiff = allFileDiffs.find((d) => d.filename === filename);
 
-  if (fileDiff) {
-    await setCached(cacheKeyStr, fileDiff, 'prDiff');
-    return fileDiff;
-  }
+  // Cache all parsed file diffs up front (best-effort, in parallel).
+  await Promise.all(
+    allFileDiffs.map((d) =>
+      setCached(prDiffKey(owner, repo, prNumber, d.filename), d, 'prDiff'),
+    ),
+  );
+
+  const fileDiff = allFileDiffs.find((d) => d.filename === filename);
+  if (fileDiff) return fileDiff;
 
   // File not found in diff -- might be binary or empty change
-  const fallback = buildFileDiff(
-    filename,
-    null,
-    file?.previousFilename ?? null,
-  );
+  const fallback = buildFileDiff(filename, null, file?.previousFilename ?? null);
   await setCached(cacheKeyStr, fallback, 'prDiff');
   return fallback;
 }

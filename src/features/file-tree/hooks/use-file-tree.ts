@@ -13,6 +13,7 @@ interface UseFileTreeReturn {
   tree: FileTreeNode[];
   expandedPaths: Set<string>;
   toggleDirectory: (path: string) => void;
+  collapseDirectory: (path: string) => void;
   expandAll: () => void;
   collapseAll: () => void;
   fileCount: number;
@@ -20,6 +21,7 @@ interface UseFileTreeReturn {
 
 type Action =
   | { type: "toggle"; path: string }
+  | { type: "collapse_one"; path: string }
   | { type: "expand_all"; paths: string[] }
   | { type: "collapse_all" }
   | { type: "ensure_visible"; paths: string[] };
@@ -33,6 +35,12 @@ function reducer(state: Set<string>, action: Action): Set<string> {
       } else {
         next.add(action.path);
       }
+      return next;
+    }
+    case "collapse_one": {
+      if (!state.has(action.path)) return state;
+      const next = new Set(state);
+      next.delete(action.path);
       return next;
     }
     case "expand_all":
@@ -69,6 +77,10 @@ export function useFileTree(
     dispatch({ type: "toggle", path });
   }, []);
 
+  const collapseDirectory = useCallback((path: string) => {
+    dispatch({ type: "collapse_one", path });
+  }, []);
+
   const expandAll = useCallback(() => {
     dispatch({ type: "expand_all", paths: allDirPaths });
   }, [allDirPaths]);
@@ -95,6 +107,7 @@ export function useFileTree(
     tree,
     expandedPaths: effectiveExpandedPaths,
     toggleDirectory,
+    collapseDirectory,
     expandAll,
     collapseAll,
     fileCount: files.length,

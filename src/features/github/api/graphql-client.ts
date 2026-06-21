@@ -27,7 +27,7 @@ export async function graphqlRequest<T>(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<T> {
-  const delay = getRateLimitDelay(token);
+  const delay = await getRateLimitDelay(token);
   if (delay > 0) {
     throw new GitHubApiError(
       429,
@@ -45,7 +45,8 @@ export async function graphqlRequest<T>(
   });
 
   const rateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(token, rateLimit);
+  // Record rate limit off the critical path (best-effort).
+  void updateRateLimit(token, rateLimit).catch(() => {});
 
   if (!response.ok) {
     let message: string;

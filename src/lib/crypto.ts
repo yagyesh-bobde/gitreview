@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
@@ -57,4 +57,15 @@ export function decrypt(encoded: string): string {
 
   const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
   return decrypted.toString('utf8');
+}
+
+/**
+ * Derive a stable, collision-resistant, non-reversible key fragment from a
+ * secret (e.g. an access token). Used to namespace per-user cache entries
+ * without storing the token itself. SHA-256 truncated to 16 hex chars (64 bits)
+ * — vastly stronger than the previous 32-bit string hash, which risked
+ * cross-tenant cache collisions.
+ */
+export function tokenHash(token: string): string {
+  return createHash('sha256').update(token).digest('hex').slice(0, 16);
 }

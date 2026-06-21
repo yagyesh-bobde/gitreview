@@ -39,11 +39,16 @@ export default function PullRequestPage({ params }: Props) {
   const handleFileSelect = useCallback(
     (path: string) => {
       setActiveFile(path);
-      // Scroll the corresponding diff section into view
-      const el = document.getElementById(`diff-file-${CSS.escape(path)}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      // Scroll the corresponding diff section into view. NOTE: getElementById
+      // matches the literal id, so we must NOT CSS.escape the path -- that mangles
+      // the slashes/dots and the lookup silently fails. Defer one frame so a
+      // not-yet-mounted (lazy) section has its placeholder in the DOM.
+      requestAnimationFrame(() => {
+        const el = document.getElementById(`diff-file-${path}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
     },
     [setActiveFile],
   );

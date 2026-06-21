@@ -174,6 +174,19 @@ export function collectDirectoryPaths(nodes: FileTreeNode[]): string[] {
 }
 
 /**
+ * Collect all file paths under a node (recursively). For a file node, returns
+ * just its own path. Used for folder-level "viewed" toggles.
+ */
+export function collectFilePaths(node: FileTreeNode): string[] {
+  if (node.type === "file") return [node.path];
+  const paths: string[] = [];
+  for (const child of node.children ?? []) {
+    paths.push(...collectFilePaths(child));
+  }
+  return paths;
+}
+
+/**
  * Find all ancestor directory paths for a given file path.
  */
 export function getAncestorPaths(

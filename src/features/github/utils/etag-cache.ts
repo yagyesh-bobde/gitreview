@@ -1,96 +1,66 @@
 /**
- * In-memory ETag cache for GitHub conditional requests.
+ * Redis-backed ETag cache for GitHub conditional requests.
  *
- * When GitHub returns an ETag header, we store it keyed by URL + token.
- * On subsequent requests we send If-None-Match, and if we get 304 Not Modified
- * we return the cached body -- saving transfer bandwidth and not counting
- * against the rate limit (conditional requests that return 304 are free).
+ * When GitHub returns an ETag header, we store it (with the response body)
+ * keyed by URL + a hash of the token. On subsequent requests we send
+ * If-None-Match, and if we get 304 Not Modified we return the cached body --
+ * saving transfer bandwidth and NOT counting against the rate limit
+ * (conditional requests that return 304 are free).
+ *
+ * This lives in Redis (not process memory) so it survives serverless cold
+ * starts and is shared across all lambda instances -- the in-memory version
+ * was effectively useless on Vercel, where every cold container started with
+ * an empty cache and every "conditional" request was actually a full fetch.
  */
+
+import { redisGet, redisSet } from '@/lib/redis';
+import { tokenHash } from '@/lib/crypto';
 
 interface ETagEntry {
   etag: string;
   body: unknown;
-  cachedAt: number;
 }
 
-/** Max age before an entry is considered stale and eligible for eviction (10 min) */
-const MAX_AGE_MS = 10 * 60 * 1000;
-
-/** Max entries before we prune oldest */
-const MAX_ENTRIES = 500;
-
-const cache = new Map<string, ETagEntry>();
+/** How long an entry lives in Redis before it must be re-fetched (10 min). */
+const TTL_SECONDS = 10 * 60;
 
 function cacheKey(url: string, token: string): string {
-  // Include a token prefix so different users don't share cached data
-  let hash = 0;
-  for (let i = 0; i < token.length; i++) {
-    hash = ((hash << 5) - hash + token.charCodeAt(i)) | 0;
-  }
-  return `${hash.toString(36)}:${url}`;
+  // Hash the token so different users never share cached data, and so we
+  // never persist the raw token in a cache key.
+  return `gh:etag:${tokenHash(token)}:${url}`;
+}
+
+/**
+ * Read the stored ETag + body for a URL, if any.
+ */
+async function getEntry(url: string, token: string): Promise<ETagEntry | null> {
+  return redisGet<ETagEntry>(cacheKey(url, token));
 }
 
 /**
  * Get the stored ETag for a URL, if any.
  */
-export function getETag(url: string, token: string): string | null {
-  const entry = cache.get(cacheKey(url, token));
-  if (!entry) return null;
-
-  // Evict stale entries
-  if (Date.now() - entry.cachedAt > MAX_AGE_MS) {
-    cache.delete(cacheKey(url, token));
-    return null;
-  }
-
-  return entry.etag;
+export async function getETag(url: string, token: string): Promise<string | null> {
+  const entry = await getEntry(url, token);
+  return entry?.etag ?? null;
 }
 
 /**
  * Get the cached body for a URL (used when we receive 304).
  */
-export function getCachedBody<T>(url: string, token: string): T | null {
-  const entry = cache.get(cacheKey(url, token));
-  if (!entry) return null;
-
-  if (Date.now() - entry.cachedAt > MAX_AGE_MS) {
-    cache.delete(cacheKey(url, token));
-    return null;
-  }
-
-  return entry.body as T;
+export async function getCachedBody<T>(url: string, token: string): Promise<T | null> {
+  const entry = await getEntry(url, token);
+  return entry ? (entry.body as T) : null;
 }
 
 /**
  * Store an ETag and its associated response body.
  */
-export function setETagCache(url: string, token: string, etag: string, body: unknown): void {
-  // Prune if we're at capacity
-  if (cache.size >= MAX_ENTRIES) {
-    pruneOldest();
-  }
-
-  cache.set(cacheKey(url, token), {
-    etag,
-    body,
-    cachedAt: Date.now(),
-  });
-}
-
-/**
- * Remove the oldest half of entries when we exceed capacity.
- */
-function pruneOldest(): void {
-  const entries = [...cache.entries()].sort((a, b) => a[1].cachedAt - b[1].cachedAt);
-  const toRemove = Math.floor(entries.length / 2);
-  for (let i = 0; i < toRemove; i++) {
-    cache.delete(entries[i][0]);
-  }
-}
-
-/**
- * Clear all cached entries (useful for testing or logout).
- */
-export function clearETagCache(): void {
-  cache.clear();
+export async function setETagCache(
+  url: string,
+  token: string,
+  etag: string,
+  body: unknown,
+): Promise<void> {
+  await redisSet<ETagEntry>(cacheKey(url, token), { etag, body }, TTL_SECONDS);
 }
