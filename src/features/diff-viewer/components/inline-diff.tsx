@@ -63,6 +63,14 @@ export function InlineDiff({
     [fileDiff],
   );
 
+  // Map each line object to its global index once (O(n)) so split-view token
+  // lookup is O(1) instead of allLines.indexOf() per line (which was O(n²)).
+  const lineIndexMap = useMemo(() => {
+    const m = new Map<DiffLineType, number>();
+    for (let i = 0; i < allLines.length; i++) m.set(allLines[i], i);
+    return m;
+  }, [allLines]);
+
   useEffect(() => {
     if (!isLoading && allLines.length > 0) {
       highlightLines(allLines, fileDiff.language ?? 'text');
@@ -91,7 +99,7 @@ export function InlineDiff({
     return (
       <InlineSplitDiff
         fileDiff={fileDiff}
-        allLines={allLines}
+        lineIndexMap={lineIndexMap}
         tokensByIndex={tokensByIndex}
         isSelected={isSelected}
         onLineClick={handleLineClick}
@@ -290,7 +298,7 @@ function InlineUnifiedDiff({
 
 interface InlineSplitDiffProps {
   fileDiff: FileDiff;
-  allLines: DiffLineType[];
+  lineIndexMap: Map<DiffLineType, number>;
   tokensByIndex: Map<number, ThemedToken[]>;
   isSelected: (index: number) => boolean;
   onLineClick: (index: number, shiftKey: boolean) => void;
@@ -305,7 +313,7 @@ interface InlineSplitDiffProps {
 
 function InlineSplitDiff({
   fileDiff,
-  allLines,
+  lineIndexMap,
   tokensByIndex,
   isSelected,
   onLineClick,
@@ -347,7 +355,7 @@ function InlineSplitDiff({
                   {pair.left ? (
                     <DiffLine
                       line={pair.left}
-                      tokens={getTokensForLine(pair.left, allLines, tokensByIndex)}
+                      tokens={getTokensForLine(pair.left, lineIndexMap, tokensByIndex)}
                       isSelected={isSelected(absIdx)}
                       onClick={(shiftKey) => onLineClick(absIdx, shiftKey)}
                       variant="split"
@@ -370,7 +378,7 @@ function InlineSplitDiff({
                   {pair.right ? (
                     <DiffLine
                       line={pair.right}
-                      tokens={getTokensForLine(pair.right, allLines, tokensByIndex)}
+                      tokens={getTokensForLine(pair.right, lineIndexMap, tokensByIndex)}
                       isSelected={isSelected(absIdx)}
                       onClick={(shiftKey) => onLineClick(absIdx, shiftKey)}
                       variant="split"
@@ -426,11 +434,11 @@ function InlineSplitDiff({
 
 function getTokensForLine(
   line: DiffLineType,
-  allLines: DiffLineType[],
+  lineIndexMap: Map<DiffLineType, number>,
   tokensByIndex: Map<number, ThemedToken[]>,
 ): ThemedToken[] | undefined {
-  const idx = allLines.indexOf(line);
-  if (idx === -1) return undefined;
+  const idx = lineIndexMap.get(line);
+  if (idx === undefined) return undefined;
   return tokensByIndex.get(idx);
 }
 

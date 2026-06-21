@@ -47,6 +47,15 @@ export class GitHubApiError extends Error {
 // Core request function
 // ---------------------------------------------------------------------------
 
+/**
+ * Best-effort, non-blocking write. The ETag/rate-limit trackers are caches: we
+ * don't want to pay a remote-Redis round-trip on the critical path to persist
+ * them, and a dropped write only costs a future cache miss (not correctness).
+ */
+function fireAndForget(p: Promise<unknown>): void {
+  void p.catch(() => {});
+}
+
 function buildHeaders(token: string, etag?: string, accept?: string): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: accept ?? 'application/vnd.github+json',
@@ -70,8 +79,12 @@ export async function githubRequest<T>(
 ): Promise<GitHubApiResponse<T>> {
   const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
 
-  // Check rate limit before making the request
-  const delay = getRateLimitDelay(options.token);
+  // Pre-flight reads run concurrently; ioredis auto-pipelining collapses the
+  // rate-limit + ETag lookups into a single Redis round-trip.
+  const [delay, cachedEtag] = await Promise.all([
+    getRateLimitDelay(options.token),
+    options.etag !== undefined ? Promise.resolve(options.etag) : getETag(url, options.token),
+  ]);
   if (delay > 0) {
     throw new GitHubApiError(
       429,
@@ -79,8 +92,6 @@ export async function githubRequest<T>(
     );
   }
 
-  // Check for cached ETag
-  const cachedEtag = options.etag ?? getETag(url, options.token);
   const headers = buildHeaders(options.token, cachedEtag ?? undefined, accept);
 
   const response = await fetch(url, {
@@ -89,15 +100,15 @@ export async function githubRequest<T>(
     signal: options.signal,
   });
 
-  // Parse rate limit from every response
+  // Parse rate limit from every response (recorded off the critical path).
   const rateLimit: GitHubRateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(options.token, rateLimit);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
 
   const etag = response.headers.get('etag');
 
   // 304 Not Modified -- return cached body
   if (response.status === 304) {
-    const cachedBody = getCachedBody<T>(url, options.token);
+    const cachedBody = await getCachedBody<T>(url, options.token);
     if (cachedBody !== null) {
       return { data: cachedBody, etag, rateLimit, notModified: true };
     }
@@ -122,9 +133,9 @@ export async function githubRequest<T>(
 
   const data = (await response.json()) as T;
 
-  // Cache the ETag + body for future conditional requests
+  // Cache the ETag + body for future conditional requests (off critical path).
   if (etag) {
-    setETagCache(url, options.token, etag, data);
+    fireAndForget(setETagCache(url, options.token, etag, data));
   }
 
   return { data, etag, rateLimit, notModified: false };
@@ -177,7 +188,7 @@ export async function githubPaginatedRequest<T>(
   let page = 0;
 
   while (url && page < maxPages) {
-    const delay = getRateLimitDelay(options.token);
+    const delay = await getRateLimitDelay(options.token);
     if (delay > 0) {
       throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
     }
@@ -190,7 +201,7 @@ export async function githubPaginatedRequest<T>(
     });
 
     lastRateLimit = parseRateLimitHeaders(response.headers);
-    updateRateLimit(options.token, lastRateLimit);
+    fireAndForget(updateRateLimit(options.token, lastRateLimit));
     lastEtag = response.headers.get('etag');
 
     if (!response.ok) {
@@ -226,7 +237,7 @@ export async function githubPost<TBody, TResponse>(
 ): Promise<GitHubApiResponse<TResponse>> {
   const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
 
-  const delay = getRateLimitDelay(options.token);
+  const delay = await getRateLimitDelay(options.token);
   if (delay > 0) {
     throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
   }
@@ -240,7 +251,7 @@ export async function githubPost<TBody, TResponse>(
   });
 
   const rateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(options.token, rateLimit);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
 
   if (!response.ok) {
     await throwApiError(response);
@@ -257,7 +268,7 @@ export async function githubPatch<TBody, TResponse>(
 ): Promise<GitHubApiResponse<TResponse>> {
   const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
 
-  const delay = getRateLimitDelay(options.token);
+  const delay = await getRateLimitDelay(options.token);
   if (delay > 0) {
     throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
   }
@@ -271,7 +282,7 @@ export async function githubPatch<TBody, TResponse>(
   });
 
   const rateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(options.token, rateLimit);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
 
   if (!response.ok) {
     await throwApiError(response);
@@ -287,7 +298,7 @@ export async function githubDelete(
 ): Promise<void> {
   const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
 
-  const delay = getRateLimitDelay(options.token);
+  const delay = await getRateLimitDelay(options.token);
   if (delay > 0) {
     throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
   }
@@ -300,7 +311,7 @@ export async function githubDelete(
   });
 
   const rateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(options.token, rateLimit);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
 
   if (!response.ok) {
     await throwApiError(response);
@@ -316,7 +327,7 @@ export async function githubRawDiff(
 ): Promise<string> {
   const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
 
-  const delay = getRateLimitDelay(options.token);
+  const delay = await getRateLimitDelay(options.token);
   if (delay > 0) {
     throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
   }
@@ -329,7 +340,7 @@ export async function githubRawDiff(
   });
 
   const rateLimit = parseRateLimitHeaders(response.headers);
-  updateRateLimit(options.token, rateLimit);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
 
   if (!response.ok) {
     await throwApiError(response);

@@ -34,6 +34,8 @@ interface ReviewStore {
   clearPendingCommentAnchor: () => void;
   toggleCommentThread: (threadKey: string) => void;
   toggleFileViewed: (path: string) => void;
+  /** Mark/unmark many files at once (e.g. a whole folder). */
+  setFilesViewed: (paths: string[], viewed: boolean) => void;
   clearViewedFiles: () => void;
 }
 
@@ -76,6 +78,16 @@ export const useReviewStore = create<ReviewStore>((set) => ({
         delete next[path];
       } else {
         next[path] = true;
+      }
+      return { viewedFiles: next };
+    }),
+
+  setFilesViewed: (paths, viewed) =>
+    set((state) => {
+      const next = { ...state.viewedFiles };
+      for (const path of paths) {
+        if (viewed) next[path] = true;
+        else delete next[path];
       }
       return { viewedFiles: next };
     }),

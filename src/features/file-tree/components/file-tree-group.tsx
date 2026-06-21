@@ -9,8 +9,10 @@ interface FileTreeGroupProps {
   depth: number;
   selectedFile: string | null;
   expandedPaths: Set<string>;
+  viewedFiles: Record<string, boolean>;
   onFileSelect: (path: string) => void;
   onToggle: (path: string) => void;
+  onToggleViewed: (node: FileTreeNodeType) => void;
 }
 
 export function FileTreeGroup({
@@ -18,8 +20,10 @@ export function FileTreeGroup({
   depth,
   selectedFile,
   expandedPaths,
+  viewedFiles,
   onFileSelect,
   onToggle,
+  onToggleViewed,
 }: FileTreeGroupProps) {
   return (
     <div role="group">
@@ -35,8 +39,10 @@ export function FileTreeGroup({
               depth={depth}
               isSelected={isSelected}
               isExpanded={isExpanded}
+              viewedFiles={viewedFiles}
               onSelect={onFileSelect}
               onToggle={onToggle}
+              onToggleViewed={onToggleViewed}
             />
 
             {node.type === "directory" && node.children && (
@@ -54,8 +60,10 @@ export function FileTreeGroup({
                       depth={depth + 1}
                       selectedFile={selectedFile}
                       expandedPaths={expandedPaths}
+                      viewedFiles={viewedFiles}
                       onFileSelect={onFileSelect}
                       onToggle={onToggle}
+                      onToggleViewed={onToggleViewed}
                     />
                   </motion.div>
                 )}

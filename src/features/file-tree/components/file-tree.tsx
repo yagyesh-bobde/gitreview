@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { ChevronsDownUp, ChevronsUpDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReviewStore } from "@/stores/review-store";
 import type { PRFile } from "@/types/pr";
+import type { FileTreeNode as FileTreeNodeType } from "../types";
+import { collectFilePaths } from "../lib/file-tree-builder";
 import { useFileTree } from "../hooks/use-file-tree";
 import { FileTreeGroup } from "./file-tree-group";
 
@@ -21,15 +23,47 @@ export function FileTree({
   onFileSelect,
   className,
 }: FileTreeProps) {
-  const { tree, expandedPaths, toggleDirectory, expandAll, collapseAll, fileCount } =
-    useFileTree(files, selectedFile);
+  const {
+    tree,
+    expandedPaths,
+    toggleDirectory,
+    collapseDirectory,
+    expandAll,
+    collapseAll,
+    fileCount,
+  } = useFileTree(files, selectedFile);
 
   const viewedFiles = useReviewStore((s) => s.viewedFiles);
+  const setFilesViewed = useReviewStore((s) => s.setFilesViewed);
+  const setActiveFile = useReviewStore((s) => s.setActiveFile);
   const viewedCount = useMemo(
     () => files.filter((f) => viewedFiles[f.filename]).length,
     [files, viewedFiles],
   );
   const progressPct = fileCount > 0 ? (viewedCount / fileCount) * 100 : 0;
+
+  // Toggle "viewed" for a node. For a folder this marks every descendant file
+  // viewed (or clears it), and when marking viewed it collapses the folder in
+  // the tree; the matching diffs collapse on the right pane automatically since
+  // their collapse state follows "viewed".
+  const handleToggleViewed = useCallback(
+    (node: FileTreeNodeType) => {
+      const paths = collectFilePaths(node);
+      if (paths.length === 0) return;
+      const allViewed = paths.every((p) => viewedFiles[p]);
+      setFilesViewed(paths, !allViewed);
+
+      if (!allViewed && node.type === "directory") {
+        collapseDirectory(node.path);
+        // Clear the active file if it lived inside this now-collapsed folder,
+        // otherwise the tree would auto-re-expand to reveal it.
+        if (selectedFile && paths.includes(selectedFile)) {
+          setActiveFile(null);
+        }
+      }
+    },
+    [viewedFiles, setFilesViewed, collapseDirectory, selectedFile, setActiveFile],
+  );
 
   if (files.length === 0) {
     return (
@@ -83,8 +117,10 @@ export function FileTree({
           depth={0}
           selectedFile={selectedFile}
           expandedPaths={expandedPaths}
+          viewedFiles={viewedFiles}
           onFileSelect={onFileSelect}
           onToggle={toggleDirectory}
+          onToggleViewed={handleToggleViewed}
         />
       </div>
     </div>

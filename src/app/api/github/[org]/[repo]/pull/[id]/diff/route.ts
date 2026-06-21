@@ -3,6 +3,8 @@ import { getRepoAuth } from '@/features/auth/auth';
 import { fetchFileDiff } from '@/features/github/api/pulls';
 import { GitHubApiError } from '@/features/github/api/client';
 
+export const maxDuration = 60;
+
 interface RouteParams {
   params: Promise<{
     org: string;
