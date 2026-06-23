@@ -136,7 +136,19 @@ For the full architecture, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Contributing
 
-Contributions welcome. Check the issues labeled **`autopilot`** for good starting points.
+Contributions welcome. Check the issues labeled **`autopilot`** for good starting points. Every merged PR adds you to the [contributor graph](#contributors) below.
+
+---
+
+## Contributors
+
+Thanks to everyone who has helped build GitReview.
+
+<a href="https://github.com/yagyesh-bobde/gitreview/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=yagyesh-bobde/gitreview" alt="GitReview contributors" />
+</a>
+
+<sub>Made with <a href="https://contrib.rocks">contrib.rocks</a>.</sub>
 
 ---
 
