@@ -10,6 +10,7 @@ import { usePR } from '@/features/github/hooks/use-pr';
 import { usePRFiles } from '@/features/github/hooks/use-pr-files';
 import { useReviewStore } from '@/stores/review-store';
 import { useUIStore } from '@/stores/ui-store';
+import { prStorageKey } from '@/lib/review/viewed';
 import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { PageError } from './page-error';
 import { ReviewPalette } from './review-palette';
@@ -24,6 +25,7 @@ export default function PullRequestPage({ params }: Props) {
   const { org, repo, id } = use(params);
   const activeFile = useReviewStore((s) => s.activeFile);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
+  const hydratePR = useReviewStore((s) => s.hydratePR);
   const conversationOpen = useUIStore((s) => s.conversationOpen);
 
   const prNumber = Number(id);
@@ -41,6 +43,14 @@ export default function PullRequestPage({ params }: Props) {
       setActiveFile(files.data[0].filename);
     }
   }, [files.data, activeFile, setActiveFile]);
+
+  // Reconcile persisted "viewed" state for this PR against the current file
+  // shas whenever the file list loads or changes (e.g. new commits pushed).
+  useEffect(() => {
+    if (files.data) {
+      hydratePR(prStorageKey(org, repo, prNumber), files.data);
+    }
+  }, [files.data, org, repo, prNumber, hydratePR]);
 
   const handleFileSelect = useCallback(
     (path: string) => {
