@@ -13,6 +13,7 @@ interface FileTreeNodeProps {
   isSelected: boolean;
   isExpanded: boolean;
   viewedFiles: Record<string, boolean>;
+  staleViewedFiles: Record<string, boolean>;
   onSelect: (path: string) => void;
   onToggle: (path: string) => void;
   onToggleViewed: (node: FileTreeNodeType) => void;
@@ -40,6 +41,7 @@ export function FileTreeNode({
   isSelected,
   isExpanded,
   viewedFiles,
+  staleViewedFiles,
   onSelect,
   onToggle,
   onToggleViewed,
@@ -56,6 +58,9 @@ export function FileTreeNode({
         return paths.length > 0 && paths.every((p) => viewedFiles[p]);
       })()
     : !!viewedFiles[node.path];
+
+  // A file marked viewed whose content changed since (only meaningful for files).
+  const isStale = !isDirectory && !!staleViewedFiles[node.path];
 
   const handleClick = () => {
     if (isDirectory) {
@@ -117,8 +122,16 @@ export function FileTreeNode({
         {node.name}
       </span>
 
-      {/* Status dot for files (hidden once viewed) */}
-      {!isDirectory && node.status && !isViewed && (
+      {/* Changed-since-viewed indicator (takes precedence over the status dot) */}
+      {isStale && (
+        <span
+          className="size-1.5 shrink-0 rounded-full bg-amber-400"
+          title="Changed since you marked it viewed"
+        />
+      )}
+
+      {/* Status dot for files (hidden once viewed or when showing the changed dot) */}
+      {!isDirectory && node.status && !isViewed && !isStale && (
         <span
           className={cn(
             "size-1.5 shrink-0 rounded-full",

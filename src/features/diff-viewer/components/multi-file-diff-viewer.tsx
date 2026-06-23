@@ -304,6 +304,7 @@ function CollapsibleFileHeader({
   const viewedFiles = useReviewStore((s) => s.viewedFiles);
   const toggleFileViewed = useReviewStore((s) => s.toggleFileViewed);
   const isViewed = !!viewedFiles[file.filename];
+  const isStale = useReviewStore((s) => !!s.staleViewedFiles[file.filename]);
 
   const parts = file.filename.split('/');
   const basename = parts.pop() ?? file.filename;
@@ -345,6 +346,16 @@ function CollapsibleFileHeader({
           <span className="text-red-400">-{file.deletions}</span>
         )}
       </div>
+
+      {/* Changed since last viewed */}
+      {isStale && (
+        <span
+          className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400"
+          title="This file changed since you marked it viewed"
+        >
+          Changed
+        </span>
+      )}
 
       {/* Status badge */}
       <StatusBadge status={file.status} />

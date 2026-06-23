@@ -10,6 +10,7 @@ interface FileTreeGroupProps {
   selectedFile: string | null;
   expandedPaths: Set<string>;
   viewedFiles: Record<string, boolean>;
+  staleViewedFiles: Record<string, boolean>;
   onFileSelect: (path: string) => void;
   onToggle: (path: string) => void;
   onToggleViewed: (node: FileTreeNodeType) => void;
@@ -21,6 +22,7 @@ export function FileTreeGroup({
   selectedFile,
   expandedPaths,
   viewedFiles,
+  staleViewedFiles,
   onFileSelect,
   onToggle,
   onToggleViewed,
@@ -40,6 +42,7 @@ export function FileTreeGroup({
               isSelected={isSelected}
               isExpanded={isExpanded}
               viewedFiles={viewedFiles}
+              staleViewedFiles={staleViewedFiles}
               onSelect={onFileSelect}
               onToggle={onToggle}
               onToggleViewed={onToggleViewed}
@@ -61,6 +64,7 @@ export function FileTreeGroup({
                       selectedFile={selectedFile}
                       expandedPaths={expandedPaths}
                       viewedFiles={viewedFiles}
+                      staleViewedFiles={staleViewedFiles}
                       onFileSelect={onFileSelect}
                       onToggle={onToggle}
                       onToggleViewed={onToggleViewed}

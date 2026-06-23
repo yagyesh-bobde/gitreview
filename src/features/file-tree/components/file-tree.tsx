@@ -34,6 +34,7 @@ export function FileTree({
   } = useFileTree(files, selectedFile);
 
   const viewedFiles = useReviewStore((s) => s.viewedFiles);
+  const staleViewedFiles = useReviewStore((s) => s.staleViewedFiles);
   const setFilesViewed = useReviewStore((s) => s.setFilesViewed);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
   const viewedCount = useMemo(
@@ -118,6 +119,7 @@ export function FileTree({
           selectedFile={selectedFile}
           expandedPaths={expandedPaths}
           viewedFiles={viewedFiles}
+          staleViewedFiles={staleViewedFiles}
           onFileSelect={onFileSelect}
           onToggle={toggleDirectory}
           onToggleViewed={handleToggleViewed}
