@@ -9,17 +9,16 @@ export const AnalyticsEvent = {
   // Auth
   SIGNED_IN: 'signed_in',
   SIGNED_OUT: 'signed_out',
+  ACCOUNT_LINK_STARTED: 'account_link_started',
   ACCOUNT_LINKED: 'account_linked',
-
-  // Reviews
-  PR_OPENED: 'pr_opened',
-  REVIEW_REQUESTED: 'review_requested',
-  REVIEW_COMPLETED: 'review_completed',
-  COMMENT_POSTED: 'comment_posted',
 
   // Navigation / discovery
   DASHBOARD_VIEWED: 'dashboard_viewed',
-  REPO_SELECTED: 'repo_selected',
+
+  // PR review
+  PR_REVIEW_VIEWED: 'pr_review_viewed',
+  COMMENT_POSTED: 'comment_posted',
+  REVIEW_SUBMITTED: 'review_submitted',
 } as const;
 
 export type AnalyticsEventName =

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { track, AnalyticsEvent } from '@/lib/analytics/events';
 
 export function SignInButton() {
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,7 @@ export function SignInButton() {
       loading={loading}
       onClick={() => {
         setLoading(true);
+        track(AnalyticsEvent.SIGNED_IN, { method: 'github' });
         signIn('github', { callbackUrl: '/' });
       }}
     >

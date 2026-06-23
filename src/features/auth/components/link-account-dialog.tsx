@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useGenerateLinkToken, useLinkTokenStatus } from '@/features/auth/hooks/use-link-token';
+import { track, AnalyticsEvent } from '@/lib/analytics/events';
 
 interface LinkAccountDialogProps {
   open: boolean;
@@ -39,6 +40,7 @@ export function LinkAccountDialog({ open, onOpenChange }: LinkAccountDialogProps
   useEffect(() => {
     if (open && !hasGenerated.current) {
       hasGenerated.current = true;
+      track(AnalyticsEvent.ACCOUNT_LINK_STARTED);
       generateToken.mutate(undefined, {
         onSuccess: (data) => {
           setToken(data.token);
@@ -54,6 +56,7 @@ export function LinkAccountDialog({ open, onOpenChange }: LinkAccountDialogProps
   // Auto-close when the token is consumed
   useEffect(() => {
     if (tokenStatus.data?.status === 'used') {
+      track(AnalyticsEvent.ACCOUNT_LINKED);
       queryClient.invalidateQueries({ queryKey: ['github-accounts'] });
       const timer = setTimeout(() => onOpenChange(false), 1500);
       return () => clearTimeout(timer);

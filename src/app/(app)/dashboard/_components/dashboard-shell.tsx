@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePRList, type AccountStatus } from '@/features/github/hooks/use-pr-list';
 import { useUIStore } from '@/stores/ui-store';
+import { track, AnalyticsEvent } from '@/lib/analytics/events';
 import { DashboardHeader } from './dashboard-header';
 import { DashboardKeyboard } from './dashboard-keyboard';
 import { PRListView, ListViewSkeleton } from './pr-list-view';
@@ -100,6 +102,11 @@ function AccountErrorBanner({ statuses }: { statuses: AccountStatus[] }) {
 export function DashboardShell() {
   const dashboardView = useUIStore((s) => s.dashboardView);
   const { data, isLoading, error, refetch } = usePRList();
+
+  // Fire once when the dashboard mounts.
+  useEffect(() => {
+    track(AnalyticsEvent.DASHBOARD_VIEWED);
+  }, []);
 
   const prs = data?.prs;
   const githubLogins = data?.githubLogins ?? [];

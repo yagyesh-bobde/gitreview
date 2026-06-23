@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PRComment, PRReview, PRCommentSide } from '@/types/pr';
+import { track, AnalyticsEvent } from '@/lib/analytics/events';
 
 // ---------------------------------------------------------------------------
 // Shared types
@@ -60,6 +61,7 @@ export function usePostIssueComment(
       return data.comment;
     },
     onSuccess: (newComment) => {
+      track(AnalyticsEvent.COMMENT_POSTED, { type: 'issue' });
       queryClient.setQueryData<CommentsCache>(key, (old) => {
         if (!old) return old;
         return {
@@ -112,6 +114,7 @@ export function usePostReviewComment(
       return data.comment;
     },
     onSuccess: (newComment) => {
+      track(AnalyticsEvent.COMMENT_POSTED, { type: 'review_inline' });
       queryClient.setQueryData<CommentsCache>(key, (old) => {
         if (!old) return old;
         return {
@@ -161,6 +164,7 @@ export function useReplyToComment(
       return data.comment;
     },
     onSuccess: (newComment) => {
+      track(AnalyticsEvent.COMMENT_POSTED, { type: 'reply' });
       queryClient.setQueryData<CommentsCache>(key, (old) => {
         if (!old) return old;
         return {
@@ -209,7 +213,8 @@ export function useSubmitReview(
       const data: ReviewMutationResponse = await res.json();
       return data.review;
     },
-    onSuccess: (newReview) => {
+    onSuccess: (newReview, params) => {
+      track(AnalyticsEvent.REVIEW_SUBMITTED, { action: params.event });
       queryClient.setQueryData<CommentsCache>(key, (old) => {
         if (!old) return old;
         return {

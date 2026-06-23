@@ -14,6 +14,7 @@ import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { PageError } from './page-error';
 import { ReviewPalette } from './review-palette';
 import { ConversationPanel } from './conversation-panel';
+import { track, AnalyticsEvent } from '@/lib/analytics/events';
 
 interface Props {
   params: Promise<{ org: string; repo: string; id: string }>;
@@ -28,6 +29,11 @@ export default function PullRequestPage({ params }: Props) {
   const prNumber = Number(id);
   const pr = usePR(org, repo, prNumber);
   const files = usePRFiles(org, repo, prNumber);
+
+  // Fire once per PR review page view.
+  useEffect(() => {
+    track(AnalyticsEvent.PR_REVIEW_VIEWED, { org, repo, pr_number: prNumber });
+  }, [org, repo, prNumber]);
 
   // Auto-select first file when files load
   useEffect(() => {
