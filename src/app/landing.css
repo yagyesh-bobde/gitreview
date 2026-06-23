@@ -118,6 +118,16 @@
   background: var(--bg-elevated);
 }
 
+.landing .btn-github {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.landing .btn-github svg:last-child {
+  color: #e3b341; /* GitHub star gold */
+}
+
 .landing .btn-nav-primary {
   padding: 7px 16px;
   font-size: 13px;
@@ -1500,8 +1510,17 @@
     font-size: 15px;
   }
 
-  .landing .btn-nav {
+  .landing .btn-nav:not(.btn-github) {
     /* Sign in is reachable from the primary CTA target (/login) */
+    display: none;
+  }
+
+  /* Keep the GitHub link visible but compact (icons only) on phones */
+  .landing .btn-github {
+    padding: 7px 10px;
+  }
+
+  .landing .btn-github .btn-github-label {
     display: none;
   }
 
