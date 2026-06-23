@@ -12,6 +12,22 @@ GitReview is a dedicated review interface that makes large PRs manageable. It gr
 
 ---
 
+## Screenshots
+
+### Dashboard
+
+All your pull requests across every connected repo in one place -- filter by *Created by me*, *Review requested*, or *All open*, hide noisy repos, and sort by recency. Real-time sync keeps counts current.
+
+![GitReview dashboard listing open pull requests grouped by author across multiple repositories](./docs/screenshots/dashboard.png)
+
+### Pull Request Review
+
+A focused diff view for large changesets: a categorized file tree on the left (147 files here), per-file review progress, virtualized diffs with syntax highlighting, collapsible hunks, and a *Viewed* toggle to track what you've covered.
+
+![GitReview pull request view showing a categorized file tree and a syntax-highlighted diff for a 147-file release PR](./docs/screenshots/pull-request-diff.png)
+
+---
+
 ## Key Features
 
 - **Smart file categorization** -- Group changed files by directory, file type, or estimated impact. Navigate a 200-file PR without losing your mind.
