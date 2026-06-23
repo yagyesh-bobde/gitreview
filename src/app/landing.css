@@ -1465,3 +1465,98 @@
 .landing .page {
   min-height: 100vh;
 }
+
+/* ─── RESPONSIVE / MOBILE ─────────────────────────── */
+/* Tablet and below */
+@media (max-width: 900px) {
+  .landing nav {
+    padding: 0 24px;
+  }
+
+  .landing .hero {
+    padding-top: 112px;
+    padding-bottom: 56px;
+  }
+
+  .landing .features-strip {
+    flex-wrap: wrap;
+    gap: 16px 28px;
+    padding: 36px 24px;
+  }
+
+  .landing .features-strip .feature-divider {
+    display: none;
+  }
+}
+
+/* Phones — hide the full interactive dashboard mockup and stack the hero */
+@media (max-width: 640px) {
+  .landing nav {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .landing .nav-logo {
+    font-size: 15px;
+  }
+
+  .landing .btn-nav {
+    /* Sign in is reachable from the primary CTA target (/login) */
+    display: none;
+  }
+
+  .landing .btn-nav-primary {
+    padding: 7px 14px;
+    font-size: 12.5px;
+  }
+
+  .landing .hero {
+    padding-top: 96px;
+    padding-bottom: 48px;
+  }
+
+  .landing .hero-headline {
+    font-size: clamp(32px, 9vw, 44px);
+    margin-bottom: 20px;
+  }
+
+  .landing .hero-sub {
+    font-size: 16px;
+    padding: 0 16px;
+    margin-bottom: 32px;
+  }
+
+  .landing .hero-actions {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 24px;
+    gap: 10px;
+  }
+
+  .landing .hero-actions .btn-primary,
+  .landing .hero-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing .hero-social-proof {
+    /* No mockup below on mobile, so trim the trailing space */
+    margin-bottom: 8px;
+    padding: 0 16px;
+  }
+
+  /* Do not render the heavy interactive dashboard preview on phones */
+  .landing .mockup-wrapper {
+    display: none;
+  }
+
+  .landing .features-strip {
+    gap: 14px 24px;
+    padding: 28px 20px;
+    margin-top: 8px;
+  }
+
+  .landing .feature-item {
+    font-size: 12.5px;
+  }
+}
