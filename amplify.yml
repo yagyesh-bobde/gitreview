@@ -8,6 +8,10 @@ frontend:
         - pnpm install --frozen-lockfile
     build:
       commands:
+        # Amplify injects console env vars into the BUILD container only — the SSR
+        # runtime Lambda does NOT inherit them. Persist the ones the server needs
+        # into .env.production so Next.js loads them at request time.
+        - env | grep -E '^(AUTH_SECRET|AUTH_TRUST_HOST|NEXTAUTH_SECRET|NEXTAUTH_URL|GITHUB_CLIENT_ID|GITHUB_CLIENT_SECRET|GITHUB_LINK_CLIENT_ID|GITHUB_LINK_CLIENT_SECRET|DATABASE_URL|REDIS_URL|TOKEN_ENCRYPTION_KEY|NEXT_PUBLIC_APP_URL)=' >> .env.production
         - pnpm run build
   artifacts:
     baseDirectory: .next
