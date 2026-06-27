@@ -19,6 +19,8 @@ import type { FileDiff, DiffHunk } from '../types';
 
 import { DiffEmptyState } from './diff-empty-state';
 import { InlineDiff } from './inline-diff';
+import { ScrollToTopButton } from './scroll-to-top-button';
+import { useUIStore } from '@/stores/ui-store';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -61,6 +63,7 @@ export function MultiFileDiffViewer({
 }: MultiFileDiffViewerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
+  const scrollToTopEnabled = useUIStore((s) => s.scrollToTopEnabled);
 
   // Track which file headers are visible; the topmost one is the "active" file
   const headerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -160,24 +163,28 @@ export function MultiFileDiffViewer({
   }
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="h-full overflow-y-auto"
-    >
-      <div className="flex flex-col gap-3 p-3">
-        {files.map((file) => (
-          <SingleFileDiffSection
-            key={file.filename}
-            file={file}
-            org={org}
-            repo={repo}
-            prNumber={prNumber}
-            commitId={commitId}
-            scrollContainer={scrollContainerRef}
-            onRegisterHeader={registerHeader}
-          />
-        ))}
+    <div className="relative h-full">
+      <div
+        ref={scrollContainerRef}
+        className="h-full overflow-y-auto"
+      >
+        <div className="flex flex-col gap-3 p-3">
+          {files.map((file) => (
+            <SingleFileDiffSection
+              key={file.filename}
+              file={file}
+              org={org}
+              repo={repo}
+              prNumber={prNumber}
+              commitId={commitId}
+              scrollContainer={scrollContainerRef}
+              onRegisterHeader={registerHeader}
+            />
+          ))}
+        </div>
       </div>
+
+      {scrollToTopEnabled && <ScrollToTopButton containerRef={scrollContainerRef} />}
     </div>
   );
 }

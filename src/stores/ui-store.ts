@@ -13,6 +13,9 @@ interface UIStore {
   dashboardView: DashboardView;
   conversationOpen: boolean;
 
+  /** Whether the scroll-to-top button is shown on the review page. Enabled by default. */
+  scrollToTopEnabled: boolean;
+
   /** Repos the user has chosen to hide from the dashboard, persisted in localStorage */
   excludedRepos: string[];
 
@@ -21,6 +24,7 @@ interface UIStore {
   setDashboardView: (view: DashboardView) => void;
   toggleConversation: () => void;
   setConversationOpen: (open: boolean) => void;
+  setScrollToTopEnabled: (enabled: boolean) => void;
   toggleRepoExclusion: (repoFullName: string) => void;
   clearExcludedRepos: () => void;
 }
@@ -32,6 +36,7 @@ export const useUIStore = create<UIStore>()(
       sidebarCollapsed: false,
       dashboardView: 'ide',
       conversationOpen: false,
+      scrollToTopEnabled: true,
       excludedRepos: [],
 
       setSidebarWidth: (width: number) =>
@@ -47,6 +52,8 @@ export const useUIStore = create<UIStore>()(
 
       setConversationOpen: (open: boolean) => set({ conversationOpen: open }),
 
+      setScrollToTopEnabled: (enabled: boolean) => set({ scrollToTopEnabled: enabled }),
+
       toggleRepoExclusion: (repoFullName: string) =>
         set((state) => ({
           excludedRepos: state.excludedRepos.includes(repoFullName)
@@ -61,6 +68,7 @@ export const useUIStore = create<UIStore>()(
       // Only persist user preferences, not transient UI state
       partialize: (state) => ({
         dashboardView: state.dashboardView,
+        scrollToTopEnabled: state.scrollToTopEnabled,
         excludedRepos: state.excludedRepos,
       }),
     },

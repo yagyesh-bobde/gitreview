@@ -5,15 +5,16 @@ import { useState } from 'react';
 import { ArrowLeft, Users, Palette, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AccountManagement } from './_components/account-management';
+import { AppearanceSettings } from './_components/appearance-settings';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type SectionId = 'accounts';
+type SectionId = 'accounts' | 'appearance';
 
 interface NavItem {
-  id: SectionId | 'appearance' | 'notifications';
+  id: SectionId | 'notifications';
   label: string;
   icon: typeof Users;
   comingSoon?: boolean;
@@ -25,7 +26,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'accounts', label: 'Accounts', icon: Users },
-  { id: 'appearance', label: 'Appearance', icon: Palette, comingSoon: true },
+  { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'notifications', label: 'Notifications', icon: Bell, comingSoon: true },
 ];
 
@@ -119,6 +120,7 @@ export default function SettingsPage() {
         <main className="min-w-0 flex-1 px-6 py-8 md:px-10">
           <div className="mx-auto max-w-2xl">
             {activeSection === 'accounts' && <AccountManagement />}
+            {activeSection === 'appearance' && <AppearanceSettings />}
           </div>
         </main>
       </div>
