@@ -27,6 +27,9 @@ export function usePRFiles(org: string, repo: string, id: number) {
     queryKey: ['pr-files', org, repo, id],
     queryFn: () => fetchPRFiles(org, repo, id),
     staleTime: CACHE_TTL_SECONDS.prFiles * 1000,
+    // Frozen until explicit refresh (see use-pr-refresh).
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!org && !!repo && id > 0,
     retry: (failureCount, error) => {
       if (error.message.includes('401') || error.message.includes('404')) {

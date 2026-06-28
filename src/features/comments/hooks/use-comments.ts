@@ -139,6 +139,9 @@ export function useComments(
     queryKey: ['pr-comments', org, repo, prNumber],
     queryFn: () => fetchComments(org, repo, prNumber),
     staleTime: CACHE_TTL_SECONDS.prComments * 1000,
+    // Frozen until explicit refresh (see use-pr-refresh).
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!org && !!repo && prNumber > 0,
     retry: (failureCount, error) => {
       if (error.message.includes('401') || error.message.includes('404')) {

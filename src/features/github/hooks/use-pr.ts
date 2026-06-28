@@ -27,6 +27,9 @@ export function usePR(org: string, repo: string, id: number) {
     queryKey: ['pr', org, repo, id],
     queryFn: () => fetchPR(org, repo, id),
     staleTime: CACHE_TTL_SECONDS.prMetadata * 1000,
+    // Frozen until explicit refresh (see use-pr-refresh).
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!org && !!repo && id > 0,
     retry: (failureCount, error) => {
       // Don't retry auth errors or not-found

@@ -6,6 +6,7 @@ import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { FileTree } from '@/features/file-tree/components/file-tree';
 import { MultiFileDiffViewer } from '@/features/diff-viewer/components/multi-file-diff-viewer';
 import { PRMetadataBar } from './pr-metadata-bar';
+import { ReviewRefreshBanner } from './review-refresh-banner';
 import { usePR } from '@/features/github/hooks/use-pr';
 import { usePRFiles } from '@/features/github/hooks/use-pr-files';
 import { useReviewStore } from '@/stores/review-store';
@@ -99,6 +100,8 @@ export default function PullRequestPage({ params }: Props) {
           repo={repo}
           isLoading={pr.isLoading}
         />
+
+        <ReviewRefreshBanner org={org} repo={repo} prNumber={prNumber} />
 
         <PRMetadataBar pr={pr.data ?? null} isLoading={pr.isLoading} />
 

@@ -39,6 +39,9 @@ export function usePRDiff(
     queryKey: ['pr-diff', org, repo, id, filename],
     queryFn: () => fetchPRDiff(org, repo, id, filename!),
     staleTime: CACHE_TTL_SECONDS.prDiff * 1000,
+    // Frozen until explicit refresh (see use-pr-refresh).
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!org && !!repo && id > 0 && !!filename,
     retry: (failureCount, error) => {
       if (error.message.includes('401') || error.message.includes('404')) {

@@ -41,6 +41,9 @@ export function usePRComments(org: string, repo: string, id: number) {
     queryKey: ['pr-comments', org, repo, id],
     queryFn: () => fetchPRComments(org, repo, id),
     staleTime: CACHE_TTL_SECONDS.prComments * 1000,
+    // Frozen until explicit refresh (see use-pr-refresh).
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     enabled: !!org && !!repo && id > 0,
     retry: (failureCount, error) => {
       if (error.message.includes('401') || error.message.includes('404')) {

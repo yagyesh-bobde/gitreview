@@ -1,0 +1,65 @@
+name: Welcome
+
+# React to and comment on newly opened issues and pull requests.
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: React and comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isPR = context.eventName === 'pull_request';
+            const payload = isPR ? context.payload.pull_request : context.payload.issue;
+            const number = payload.number;
+            const author = payload.user.login;
+
+            // Add a 🚀 reaction to the issue/PR so contributors get instant feedback.
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              content: 'rocket',
+            });
+
+            const prBody = [
+              `👋 Thanks for the pull request, @${author}!`,
+              ``,
+              `A maintainer will review your changes soon. To help things move faster, please make sure:`,
+              ``,
+              `- ✅ Your PR has a clear title and description of **what** changed and **why**.`,
+              `- ✅ Linked any related issues (e.g. \`Closes #123\`).`,
+              `- ✅ The build and lint pass locally (\`pnpm build\` / \`pnpm lint\`).`,
+              `- ✅ You kept the change focused — smaller PRs get reviewed faster.`,
+              ``,
+              `We appreciate the contribution to **gitreview** 🙏`,
+            ].join('\n');
+
+            const issueBody = [
+              `👋 Thanks for opening this issue, @${author}!`,
+              ``,
+              `A maintainer will take a look shortly. To help us triage it quickly, please make sure you've included:`,
+              ``,
+              `- 🐛 **For bugs:** steps to reproduce, what you expected, and what actually happened.`,
+              `- 💡 **For feature requests:** the problem you're trying to solve and any context.`,
+              `- 🖥️ Relevant environment details (browser, OS) and screenshots or logs where helpful.`,
+              ``,
+              `If this is something you'd like to work on yourself, comment here and we'll be happy to point you in the right direction. Thanks for helping improve **gitreview**! 🙏`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              body: isPR ? prBody : issueBody,
+            });

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lesson 1 · The Big Picture — GitReview</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#27303b;
+    --ink:#e6edf3; --mut:#9aa7b4; --dim:#6b7785;
+    --accent:#58a6ff; --green:#7ee787; --purple:#bc8cff; --orange:#ffa657; --pink:#ff7b95;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:linear-gradient(180deg,#0b0f15,#0d1117);color:var(--ink);
+       font-family:var(--sans);line-height:1.7;font-size:17px}
+  .wrap{max-width:860px;margin:0 auto;padding:56px 22px 120px}
+  .kicker{font-family:var(--mono);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  h1{font-size:2.5rem;line-height:1.15;margin:0 0 14px;letter-spacing:-.02em}
+  .lede{font-size:1.18rem;color:var(--mut);margin:0 0 8px}
+  .meta{color:var(--dim);font-family:var(--mono);font-size:.82rem;margin-top:18px}
+  h2{font-size:1.5rem;margin:54px 0 6px;letter-spacing:-.01em}
+  h2 .n{font-family:var(--mono);color:var(--accent);font-size:1rem;margin-right:10px;opacity:.8}
+  h3{font-size:1.12rem;margin:30px 0 6px}
+  p{margin:12px 0}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+  a:hover{border-bottom-color:var(--accent)}
+  code{font-family:var(--mono);background:#0a0e14;border:1px solid var(--line);padding:1px 6px;border-radius:5px;font-size:.84em;color:var(--green)}
+  .analogy{background:linear-gradient(135deg,#13202e,#161b22);border-left:3px solid var(--accent);
+           border-radius:0 12px 12px 0;padding:16px 20px;margin:20px 0;color:#cfe3f7}
+  .analogy b{color:#fff}
+  hr{border:none;border-top:1px solid var(--line);margin:42px 0}
+
+  /* building blocks grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin:22px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:transform .15s,border-color .15s}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .card .tag{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+  .card h4{margin:6px 0 4px;font-size:1.05rem}
+  .card h4 .pkg{font-family:var(--mono);font-size:.78rem;color:var(--purple);display:block;font-weight:400;margin-top:2px}
+  .card p{margin:6px 0 0;font-size:.93rem;color:var(--mut)}
+
+  /* flow steps */
+  .flow{counter-reset:step;margin:24px 0}
+  .step{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+        padding:16px 20px 16px 64px;margin:10px 0}
+  .step::before{counter-increment:step;content:counter(step);position:absolute;left:16px;top:16px;
+        width:32px;height:32px;border-radius:50%;background:var(--accent);color:#04101f;
+        font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+  .step b{color:#fff}
+  .step .where{display:inline-block;font-family:var(--mono);font-size:.74rem;color:var(--orange);
+        background:#221a10;border:1px solid #3a2c14;border-radius:5px;padding:1px 7px;margin-left:6px}
+  .step .side{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.92rem}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--accent);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}
+  td code{font-size:.82em}
+
+  /* quiz */
+  .quiz{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:24px;margin:26px 0}
+  .quiz h3{margin-top:0}
+  .q{margin:20px 0}
+  .q .stem{font-weight:600;margin-bottom:10px}
+  .opt{display:block;width:100%;text-align:left;background:var(--panel);color:var(--ink);
+       border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin:7px 0;cursor:pointer;
+       font-size:.95rem;font-family:inherit;transition:border-color .12s,background .12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.correct{border-color:var(--green);background:#10231a}
+  .opt.wrong{border-color:var(--pink);background:#2a1419}
+  .fb{font-size:.9rem;margin-top:8px;min-height:1.2em;color:var(--mut)}
+  .fb.ok{color:var(--green)} .fb.no{color:var(--pink)}
+
+  .ask{background:linear-gradient(135deg,#1a1330,#161b22);border:1px solid #3a2c5a;border-radius:14px;
+       padding:18px 22px;margin:40px 0 0}
+  .ask b{color:var(--purple)}
+  .foot{color:var(--dim);font-size:.85rem;margin-top:30px;text-align:center}
+  .citelist{font-size:.86rem;color:var(--mut)}
+  .citelist code{font-size:.8em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">Lesson 1 · The Big Picture</p>
+  <h1>What GitReview is, in one mental model</h1>
+  <p class="lede">By the end of this page you'll be able to explain — in plain words — what every major piece of your app does, and trace exactly what happens when someone opens a pull request.</p>
+  <p class="meta">~8 min · grounded in your real repo · open the <a href="../reference/glossary.html">glossary</a> alongside this</p>
+
+  <hr/>
+
+  <h2><span class="n">00</span>The one-sentence version</h2>
+  <p><b>GitReview is a website that makes reviewing <em>big</em> GitHub pull requests bearable.</b> GitHub's own review page chokes on large PRs — hundreds of files, a sluggish diff, lost context. GitReview re-renders that same data in a faster, smarter interface: a categorized file tree, diffs that stay smooth at any size, and a Gemini AI assistant on every screen. <span class="citelist">(source: your <code>README.md</code>)</span></p>
+
+  <div class="analogy">
+    <b>Analogy:</b> Think of GitReview as a <b>better pair of glasses for GitHub</b>. The data still lives on GitHub. GitReview borrows it (with your permission), arranges it so your eyes don't hurt, and writes any comments back to GitHub where your team expects them.
+  </div>
+
+  <h2><span class="n">01</span>The 9 building blocks (and why each was picked)</h2>
+  <p>Every modern web app is just a handful of jobs. Here are GitReview's nine, each with the tool that does the job and the <b>one reason</b> it was chosen. Don't memorize — just get a feel for the shape.</p>
+
+  <div class="grid">
+    <div class="card"><span class="tag">The frame</span><h4>Next.js 16 <span class="pkg">next · App Router</span></h4><p>Runs both the server and the browser code in one project. Folders become URLs. Chosen so the first paint can be server-rendered (fast) while still being interactive.</p></div>
+    <div class="card"><span class="tag">The language</span><h4>TypeScript <span class="pkg">typescript (strict)</span></h4><p>JavaScript with types. Catches mistakes before they ship. "strict" mode means no lazy shortcuts.</p></div>
+    <div class="card"><span class="tag">The login</span><h4>NextAuth v5 <span class="pkg">next-auth · GitHub OAuth</span></h4><p>"Sign in with GitHub." Handles the whole login dance and stores your access token. Chosen because the app's data <em>is</em> GitHub data.</p></div>
+    <div class="card"><span class="tag">The data source</span><h4>GitHub REST API <span class="pkg">fetch</span></h4><p>Where PRs, files, diffs and comments come from. GitReview is a polished reader/writer on top of it.</p></div>
+    <div class="card"><span class="tag">The fast copy</span><h4>Upstash Redis <span class="pkg">ioredis</span></h4><p>A speed cache. Instead of asking GitHub the same thing repeatedly, answers are kept here for minutes. Chosen for "instant feel."</p></div>
+    <div class="card"><span class="tag">The records</span><h4>Neon Postgres <span class="pkg">drizzle-orm</span></h4><p>The real database — review sessions, which files you've viewed, AI chats, linked accounts. Drizzle talks to it type-safely.</p></div>
+    <div class="card"><span class="tag">Browser data</span><h4>TanStack Query <span class="pkg">@tanstack/react-query</span></h4><p>Fetches & caches data <em>in the browser</em> so components just ask for "the PR files" and don't juggle loading flags.</p></div>
+    <div class="card"><span class="tag">The smooth diff</span><h4>Virtual + Shiki <span class="pkg">@tanstack/react-virtual · shiki</span></h4><p>Virtual draws only on-screen lines; Shiki colors the code (VS Code's engine). Together: huge diffs stay smooth & readable.</p></div>
+    <div class="card"><span class="tag">The assistant</span><h4>Gemini <span class="pkg">@google/generative-ai</span></h4><p>The AI bar. Explains code, summarizes changes, spots bugs — streaming answers token by token.</p></div>
+  </div>
+  <p style="color:var(--mut);font-size:.92rem">Two more quiet helpers: <b>Zustand</b> (<code>zustand</code>) is the shared whiteboard that lets, say, the file tree tell the diff viewer "this file is now selected"; and <b>shadcn/ui + Tailwind v4</b> are the look — pre-built, restyleable components plus utility CSS. <span class="citelist">(source: <code>package.json</code>, <code>README.md</code> stack table)</span></p>
+
+  <h2><span class="n">02</span>The journey of opening a pull request</h2>
+  <p>This is the single most useful thing to understand. Follow one click — opening <code>/twofourlabs/app-kavana/pull/255</code> — all the way through. Each step says <span class="side">where it runs</span>. <span class="citelist">(source: the <b>Data Flow</b> section of your <code>ARCHITECTURE.md</code>)</span></p>
+
+  <div class="flow">
+    <div class="step"><span class="side">SERVER</span><br/><b>The URL becomes a page.</b> The folder <code>app/(app)/[org]/[repo]/pull/[id]/</code> matches the address. The <span class="where">layout.tsx</span> reads the pieces: org, repo, id = 255.</div>
+    <div class="step"><span class="side">SERVER</span><br/><b>Fetch the PR's basic info.</b> It first checks the <b>Redis cache</b>. Cache hit → instant. Cache miss → call the GitHub API, then save the answer in Redis for ~5 min. The PR title/author/status are baked straight into the HTML.</div>
+    <div class="step"><span class="side">BROWSER</span><br/><b>The page comes alive (hydrates).</b> Now interactive code takes over. It finds or creates your <b>review session</b> (so it remembers your progress) via <code>/api/review-sessions</code>.</div>
+    <div class="step"><span class="side">BROWSER</span><br/><b>Load the file list.</b> <b>TanStack Query</b> asks the app's own API for the changed files, already <em>categorized</em> into a tidy tree, and shows it in the left sidebar.</div>
+    <div class="step"><span class="side">BROWSER</span><br/><b>You click a file.</b> That writes <code>activeFilePath</code> into the <b>Zustand</b> store — the shared whiteboard everyone watches.</div>
+    <div class="step"><span class="side">BROWSER</span><br/><b>Load that file's diff.</b> Another TanStack Query call fetches the diff, already parsed into <b>hunks</b> (blocks of changed lines).</div>
+    <div class="step"><span class="side">BROWSER</span><br/><b>Render it smoothly.</b> <b>TanStack Virtual</b> draws only the lines on screen; <b>Shiki</b> colors the code lazily, per language. A 5,000-line file feels like 50.</div>
+  </div>
+
+  <div class="analogy">
+    <b>The key insight:</b> work is split in two. The <b>server</b> does the first, heavy load so the page shows up fast. The <b>browser</b> handles everything interactive after that. Redis makes the server fast; TanStack Query + Virtual + Shiki make the browser fast.
+  </div>
+
+  <h2><span class="n">03</span>"Why this package and not another?" — the short answers</h2>
+  <table>
+    <tr><th>Job</th><th>Pick</th><th>The one-line why</th></tr>
+    <tr><td>Server + browser framework</td><td><code>next</code> 16</td><td>One project, server-rendered speed + rich interactivity, folders-as-URLs that mirror GitHub.</td></tr>
+    <tr><td>Login</td><td><code>next-auth</code> v5</td><td>Built for "Sign in with GitHub"; manages tokens & sessions so you don't hand-roll OAuth.</td></tr>
+    <tr><td>Talk to the DB</td><td><code>drizzle-orm</code></td><td>Type-safe SQL in TypeScript — your editor catches bad queries before runtime.</td></tr>
+    <tr><td>Database host</td><td>Neon (<code>@neondatabase/serverless</code>)</td><td>Postgres that scales to zero and connects over HTTP — perfect for serverless.</td></tr>
+    <tr><td>Fast cache</td><td><code>ioredis</code> + Upstash</td><td>Sub-millisecond reads so the app doesn't re-hit GitHub's rate limits.</td></tr>
+    <tr><td>Browser data fetching</td><td><code>@tanstack/react-query</code></td><td>Caching, retries, background refresh for free — no manual loading spinners everywhere.</td></tr>
+    <tr><td>Giant lists/diffs</td><td><code>@tanstack/react-virtual</code></td><td>Renders ~30 rows instead of 5,000; the only way big diffs stay at 60fps.</td></tr>
+    <tr><td>Code coloring</td><td><code>shiki</code></td><td>Same highlighter as VS Code; accurate colors, runs as WASM.</td></tr>
+    <tr><td>Shared UI state</td><td><code>zustand</code></td><td>Tiny, no boilerplate; lets features share state without importing each other.</td></tr>
+    <tr><td>AI</td><td><code>@google/generative-ai</code></td><td>Gemini — streaming responses, large context window for whole-file reasoning.</td></tr>
+  </table>
+
+  <hr/>
+
+  <h2><span class="n">04</span>Check yourself</h2>
+  <p>Three quick questions. Click an answer — you'll get instant feedback. No score is saved; this is just to make it stick.</p>
+
+  <div class="quiz" id="quiz">
+    <div class="q" data-correct="b">
+      <div class="stem">1. When you first open a PR page, what renders the PR's title and status — and where?</div>
+      <button class="opt" data-k="a">The browser, after fetching from GitHub with TanStack Query</button>
+      <button class="opt" data-k="b">The server, which checks Redis first, then GitHub, and bakes it into the HTML</button>
+      <button class="opt" data-k="c">Gemini generates it from the diff</button>
+      <div class="fb"></div>
+    </div>
+    <div class="q" data-correct="c">
+      <div class="stem">2. A diff is 5,000 lines long but scrolls smoothly. Which two tools make that possible?</div>
+      <button class="opt" data-k="a">Redis and Drizzle</button>
+      <button class="opt" data-k="b">NextAuth and Zustand</button>
+      <button class="opt" data-k="c">TanStack Virtual (draws only visible lines) and Shiki (colors them lazily)</button>
+      <div class="fb"></div>
+    </div>
+    <div class="q" data-correct="a">
+      <div class="stem">3. You click a file in the sidebar and the diff viewer reacts. How did the two talk to each other?</div>
+      <button class="opt" data-k="a">Through a shared Zustand store — the file tree writes the selected path, the diff viewer reads it</button>
+      <button class="opt" data-k="b">The file tree imports the diff viewer and calls its function directly</button>
+      <button class="opt" data-k="c">They re-fetch the whole page from the server</button>
+      <div class="fb"></div>
+    </div>
+  </div>
+
+  <div class="ask">
+    <b>Your teacher is one message away.</b> Stuck on a word, or want to go deeper on any block above? Just ask me in the chat — e.g. <em>"show me where the Redis cache actually lives in the code,"</em> or <em>"explain hydration like I'm five."</em> That's how these lessons are meant to work.
+  </div>
+
+  <p class="foot">Lesson 1 of a series · Next up: <b>how login actually works</b> (GitHub OAuth + your tokens). Reference: <a href="../reference/glossary.html">glossary.html</a></p>
+</div>
+
+<script>
+  document.querySelectorAll('.q').forEach(function(q){
+    var correct = q.getAttribute('data-correct');
+    var fb = q.querySelector('.fb');
+    q.querySelectorAll('.opt').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(q.dataset.done) return;
+        q.dataset.done = '1';
+        var k = btn.getAttribute('data-k');
+        if(k === correct){
+          btn.classList.add('correct');
+          fb.textContent = '✓ Correct.';
+          fb.className = 'fb ok';
+        } else {
+          btn.classList.add('wrong');
+          q.querySelector('.opt[data-k="'+correct+'"]').classList.add('correct');
+          fb.textContent = '✗ Not quite — the highlighted one is right. Re-read the matching step above.';
+          fb.className = 'fb no';
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>

@@ -26,6 +26,8 @@ const MAX_TRACKED_PRS = 100;
 
 interface ReviewStore {
   activeFile: string | null;
+  /** PERSISTED: prKey -> last active file path. */
+  activeFileByPr: Record<string, string>;
   viewMode: DiffViewMode;
   selectedLines: LineSelection | null;
 
@@ -74,6 +76,7 @@ export const useReviewStore = create<ReviewStore>()(
   persist(
     (set) => ({
       activeFile: null,
+      activeFileByPr: {},
       viewMode: 'unified',
       selectedLines: null,
       pendingCommentAnchor: null,
@@ -85,7 +88,23 @@ export const useReviewStore = create<ReviewStore>()(
       viewedFiles: {},
       staleViewedFiles: {},
 
-      setActiveFile: (file) => set({ activeFile: file, selectedLines: null }),
+      setActiveFile: (file) =>
+        set((state) => {
+          const base = {
+            activeFile: file,
+            selectedLines: null,
+          } as Partial<ReviewStore>;
+          if (file && state.currentPrKey) {
+            return {
+              ...base,
+              activeFileByPr: {
+                ...state.activeFileByPr,
+                [state.currentPrKey]: file,
+              },
+            };
+          }
+          return base;
+        }),
 
       setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -127,13 +146,28 @@ export const useReviewStore = create<ReviewStore>()(
           }
           nextByPr = pruneTrackedPrs(nextByPr, prKey, MAX_TRACKED_PRS);
 
-          return {
+          const base = {
             currentPrKey: prKey,
             currentShaByPath,
             viewedFiles: viewed,
             staleViewedFiles: stale,
             viewedByPr: nextByPr,
           };
+
+          // Only restore the active file when switching to a DIFFERENT PR.
+          // On a same-PR refetch (e.g. explicit refresh) we preserve whatever
+          // the user currently has selected.
+          if (prKey !== state.currentPrKey) {
+            const restored = state.activeFileByPr[prKey];
+            const activeFile =
+              restored !== undefined &&
+              currentShaByPath[restored] !== undefined
+                ? restored
+                : null;
+            return { ...base, activeFile };
+          }
+
+          return base;
         }),
 
       toggleFileViewed: (path) =>
@@ -218,9 +252,14 @@ export const useReviewStore = create<ReviewStore>()(
               removeItem: () => {},
             },
       ),
-      // Only the durable per-PR sha map is persisted; everything else
-      // (active file, view mode, comment threads, derived maps) is transient.
-      partialize: (state) => ({ viewedByPr: state.viewedByPr }),
+      // Durable per-PR maps are persisted: the viewed-state sha map and the
+      // last-active-file-per-PR map (so returning to a PR restores your place).
+      // Everything else (current active file, view mode, comment threads,
+      // derived maps) is transient.
+      partialize: (state) => ({
+        viewedByPr: state.viewedByPr,
+        activeFileByPr: state.activeFileByPr,
+      }),
     },
   ),
 );
