@@ -3,6 +3,7 @@
 import { memo } from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { cn } from '@/lib/utils/cn';
 
 interface CommentBodyProps {
@@ -34,13 +35,17 @@ export const CommentBody = memo(function CommentBody({
   return (
     <div
       className={cn(
-        'comment-body text-sm text-zinc-200',
+        // `break-words` + `overflow-wrap` keep long URLs / unbroken strings
+        // from overflowing the comment container.
+        'comment-body break-words text-sm text-zinc-200 [overflow-wrap:anywhere]',
         compact ? 'comment-body--compact' : '',
         className,
       )}
     >
       <Markdown
-        remarkPlugins={[remarkGfm]}
+        // `remark-breaks` renders single newlines as <br>, matching GitHub's
+        // comment behaviour so multi-line comments keep their line breaks.
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           // Headings
           h1: ({ children }) => (

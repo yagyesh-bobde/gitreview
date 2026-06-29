@@ -56,6 +56,10 @@ export function InlineCommentThread({
   const rootComment = thread.comments[0];
   const commentCount = thread.comments.length;
 
+  // Collapse newlines/whitespace so a multi-line comment renders as a clean
+  // single-line preview in the collapsed thread summary.
+  const previewText = rootComment.body.replace(/\s+/g, ' ').trim();
+
   if (!isExpanded) {
     // Collapsed summary
     return (
@@ -91,8 +95,8 @@ export function InlineCommentThread({
         </span>
 
         <span className="ml-auto text-[11px] text-zinc-600 line-clamp-1 max-w-[300px]">
-          {rootComment.body.slice(0, 80)}
-          {rootComment.body.length > 80 ? '...' : ''}
+          {previewText.slice(0, 80)}
+          {previewText.length > 80 ? '...' : ''}
         </span>
 
         <ChevronRight className="ml-1 size-3 shrink-0 text-zinc-600" />
