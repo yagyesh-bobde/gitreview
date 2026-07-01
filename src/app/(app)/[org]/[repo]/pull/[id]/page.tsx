@@ -128,6 +128,7 @@ export default function PullRequestPage({ params }: Props) {
                 repo={repo}
                 prNumber={prNumber}
                 commitId={pr.data?.head.sha}
+                baseSha={pr.data?.base.sha}
               />
             </SidebarLayout>
           </div>

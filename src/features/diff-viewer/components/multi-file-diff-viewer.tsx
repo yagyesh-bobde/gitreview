@@ -14,10 +14,12 @@ import { cn } from '@/lib/utils';
 import { useReviewStore } from '@/stores/review-store';
 import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
 import { buildFileDiff } from '../lib/parse-diff';
+import { isImageFile } from '../lib/diff-utils';
 import type { PRFile } from '@/types/pr';
 import type { FileDiff, DiffHunk } from '../types';
 
 import { DiffEmptyState } from './diff-empty-state';
+import { ImageDiffView } from './image-diff-view';
 import { InlineDiff } from './inline-diff';
 import { ScrollToTopButton } from './scroll-to-top-button';
 import { useUIStore } from '@/stores/ui-store';
@@ -51,7 +53,10 @@ interface MultiFileDiffViewerProps {
   org: string;
   repo: string;
   prNumber: number;
+  /** Head commit sha -- the "after" side for image previews. */
   commitId?: string;
+  /** Base commit sha -- the "before" side for image previews. */
+  baseSha?: string;
 }
 
 export function MultiFileDiffViewer({
@@ -60,6 +65,7 @@ export function MultiFileDiffViewer({
   repo,
   prNumber,
   commitId,
+  baseSha,
 }: MultiFileDiffViewerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
@@ -177,6 +183,7 @@ export function MultiFileDiffViewer({
               repo={repo}
               prNumber={prNumber}
               commitId={commitId}
+              baseSha={baseSha}
               scrollContainer={scrollContainerRef}
               onRegisterHeader={registerHeader}
             />
@@ -199,6 +206,7 @@ interface SingleFileDiffSectionProps {
   repo: string;
   prNumber: number;
   commitId?: string;
+  baseSha?: string;
   scrollContainer: React.RefObject<HTMLDivElement | null>;
   onRegisterHeader: (path: string, el: HTMLDivElement | null) => void;
 }
@@ -209,6 +217,7 @@ const SingleFileDiffSection = memo(function SingleFileDiffSection({
   repo,
   prNumber,
   commitId,
+  baseSha,
   scrollContainer,
   onRegisterHeader,
 }: SingleFileDiffSectionProps) {
@@ -277,13 +286,25 @@ const SingleFileDiffSection = memo(function SingleFileDiffSection({
       {!isCollapsed && (
         <div>
           {isVisible ? (
-            <FileDiffContent
-              file={file}
-              org={org}
-              repo={repo}
-              prNumber={prNumber}
-              commitId={commitId}
-            />
+            isImageFile(file.filename) ? (
+              // Images are binary -- render a before/after preview instead of
+              // attempting to parse a (nonexistent) text patch.
+              <ImageDiffView
+                file={file}
+                org={org}
+                repo={repo}
+                baseRef={baseSha}
+                headRef={commitId}
+              />
+            ) : (
+              <FileDiffContent
+                file={file}
+                org={org}
+                repo={repo}
+                prNumber={prNumber}
+                commitId={commitId}
+              />
+            )
           ) : (
             <FileDiffSkeleton />
           )}

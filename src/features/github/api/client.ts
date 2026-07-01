@@ -319,6 +319,41 @@ export async function githubDelete(
 }
 
 /**
+ * Fetch the raw bytes of a file (Accept: application/vnd.github.raw).
+ *
+ * Used for binary assets (images, etc.) that can't be represented as text.
+ * Returns the raw body as an ArrayBuffer plus the upstream Content-Type.
+ */
+export async function githubRawFile(
+  path: string,
+  options: GitHubApiOptions,
+): Promise<{ body: ArrayBuffer; contentType: string | null }> {
+  const url = path.startsWith('http') ? path : `${GITHUB_API_BASE}${path}`;
+
+  const delay = await getRateLimitDelay(options.token);
+  if (delay > 0) {
+    throw new GitHubApiError(429, `Rate limited. Resets in ${Math.ceil(delay / 1000)}s.`);
+  }
+
+  const headers = buildHeaders(options.token, undefined, 'application/vnd.github.raw');
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    signal: options.signal,
+  });
+
+  const rateLimit = parseRateLimitHeaders(response.headers);
+  fireAndForget(updateRateLimit(options.token, rateLimit));
+
+  if (!response.ok) {
+    await throwApiError(response);
+  }
+
+  const body = await response.arrayBuffer();
+  return { body, contentType: response.headers.get('content-type') };
+}
+
+/**
  * Fetch raw diff content (Accept: application/vnd.github.diff).
  */
 export async function githubRawDiff(

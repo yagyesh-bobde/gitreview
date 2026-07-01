@@ -5,8 +5,9 @@
  * and for displaying full file views alongside diffs.
  */
 
-import { githubRequest } from './client';
+import { githubRequest, githubRawFile } from './client';
 import { getCached, setCached, fileContentKey } from '@/lib/cache/github-cache';
+import { detectMimeType } from '@/features/diff-viewer/lib/diff-utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -98,6 +99,43 @@ export async function fetchFileContent(
 
   await setCached(cacheKeyStr, result, 'prDiff');
   return result;
+}
+
+export interface RawFile {
+  body: ArrayBuffer;
+  /** MIME type, resolved from the upstream header or the file extension. */
+  contentType: string;
+}
+
+/**
+ * Fetch the raw bytes of a (typically binary) file at a specific ref.
+ *
+ * Unlike {@link fetchFileContent}, this returns the undecoded bytes and is
+ * intended for serving assets like images through an API route. The
+ * Content-Type prefers a type inferred from the file extension (GitHub tends
+ * to return application/octet-stream for the raw media type).
+ */
+export async function fetchRawFile(
+  token: string,
+  owner: string,
+  repo: string,
+  ref: string,
+  path: string,
+): Promise<RawFile> {
+  const { body, contentType } = await githubRawFile(
+    `/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`,
+    { token },
+  );
+
+  // Prefer an extension-derived type; fall back to the upstream header only
+  // when we can't recognise the extension.
+  const inferred = detectMimeType(path);
+  const resolved =
+    inferred !== 'application/octet-stream'
+      ? inferred
+      : contentType ?? 'application/octet-stream';
+
+  return { body, contentType: resolved };
 }
 
 /**

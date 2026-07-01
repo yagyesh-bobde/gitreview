@@ -124,6 +124,83 @@ export function detectLanguage(filename: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Media / asset detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Image file extensions we can render inline, mapped to their MIME type.
+ * Covers the common web-renderable formats (browsers display all of these
+ * via <img>). SVG is included -- rendering it through an <img> tag is safe
+ * because scripts embedded in an SVG do not execute in that context.
+ */
+const IMAGE_MIME_MAP: Record<string, string> = {
+  png: 'image/png',
+  apng: 'image/apng',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  jfif: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  svg: 'image/svg+xml',
+  bmp: 'image/bmp',
+  ico: 'image/x-icon',
+  cur: 'image/x-icon',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+};
+
+/**
+ * MIME types for other common binary assets. These aren't rendered inline as
+ * images but we can still serve them with a correct Content-Type (used by the
+ * raw-file route and for "open/download" affordances).
+ */
+const ASSET_MIME_MAP: Record<string, string> = {
+  pdf: 'application/pdf',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  eot: 'application/vnd.ms-fontobject',
+  zip: 'application/zip',
+};
+
+function extensionOf(filename: string): string {
+  const basename = filename.split('/').pop()?.toLowerCase() ?? '';
+  const dot = basename.lastIndexOf('.');
+  return dot > 0 ? basename.slice(dot + 1) : '';
+}
+
+/**
+ * Return the image MIME type for a filename, or null if it's not a
+ * recognised (inline-renderable) image.
+ */
+export function detectImageMimeType(filename: string): string | null {
+  return IMAGE_MIME_MAP[extensionOf(filename)] ?? null;
+}
+
+/** True if the file is an image we can render inline in the diff viewer. */
+export function isImageFile(filename: string): boolean {
+  return detectImageMimeType(filename) !== null;
+}
+
+/**
+ * Best-effort MIME type for any file we might serve raw (images + other
+ * assets). Falls back to application/octet-stream for unknown types so the
+ * browser treats them as opaque binary downloads.
+ */
+export function detectMimeType(filename: string): string {
+  const ext = extensionOf(filename);
+  return IMAGE_MIME_MAP[ext] ?? ASSET_MIME_MAP[ext] ?? 'application/octet-stream';
+}
+
+// ---------------------------------------------------------------------------
 // Impact assessment
 // ---------------------------------------------------------------------------
 
