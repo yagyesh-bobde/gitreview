@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import type { FileTreeNode as FileTreeNodeType } from "../types";
 import { FileTreeNode } from "./file-tree-node";
+import type { AssetRefs } from "./file-tree";
 
 interface FileTreeGroupProps {
   nodes: FileTreeNodeType[];
@@ -11,6 +12,7 @@ interface FileTreeGroupProps {
   expandedPaths: Set<string>;
   viewedFiles: Record<string, boolean>;
   staleViewedFiles: Record<string, boolean>;
+  assetRefs?: AssetRefs;
   onFileSelect: (path: string) => void;
   onToggle: (path: string) => void;
   onToggleViewed: (node: FileTreeNodeType) => void;
@@ -23,6 +25,7 @@ export function FileTreeGroup({
   expandedPaths,
   viewedFiles,
   staleViewedFiles,
+  assetRefs,
   onFileSelect,
   onToggle,
   onToggleViewed,
@@ -43,6 +46,7 @@ export function FileTreeGroup({
               isExpanded={isExpanded}
               viewedFiles={viewedFiles}
               staleViewedFiles={staleViewedFiles}
+              assetRefs={assetRefs}
               onSelect={onFileSelect}
               onToggle={onToggle}
               onToggleViewed={onToggleViewed}
@@ -65,6 +69,7 @@ export function FileTreeGroup({
                       expandedPaths={expandedPaths}
                       viewedFiles={viewedFiles}
                       staleViewedFiles={staleViewedFiles}
+                      assetRefs={assetRefs}
                       onFileSelect={onFileSelect}
                       onToggle={onToggle}
                       onToggleViewed={onToggleViewed}

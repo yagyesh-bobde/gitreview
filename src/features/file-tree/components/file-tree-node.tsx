@@ -5,7 +5,11 @@ import { cn } from "@/lib/utils";
 import type { FileTreeNode as FileTreeNodeType } from "../types";
 import { collectFilePaths } from "../lib/file-tree-builder";
 import { getImpactLevel } from "../lib/impact-scoring";
+import { isAssetFile } from "../lib/asset-detection";
+import { formatBytes } from "../lib/format-size";
+import { useAssetSize } from "../hooks/use-asset-size";
 import { FileImpactBadge } from "./file-impact-badge";
+import type { AssetRefs } from "./file-tree";
 
 interface FileTreeNodeProps {
   node: FileTreeNodeType;
@@ -14,6 +18,7 @@ interface FileTreeNodeProps {
   isExpanded: boolean;
   viewedFiles: Record<string, boolean>;
   staleViewedFiles: Record<string, boolean>;
+  assetRefs?: AssetRefs;
   onSelect: (path: string) => void;
   onToggle: (path: string) => void;
   onToggleViewed: (node: FileTreeNodeType) => void;
@@ -42,6 +47,7 @@ export function FileTreeNode({
   isExpanded,
   viewedFiles,
   staleViewedFiles,
+  assetRefs,
   onSelect,
   onToggle,
   onToggleViewed,
@@ -49,6 +55,21 @@ export function FileTreeNode({
   const isDirectory = node.type === "directory";
   const changes = (node.additions ?? 0) + (node.deletions ?? 0);
   const impactLevel = changes > 0 ? getImpactLevel(changes) : null;
+
+  // For asset files (images, PDFs, video, etc.) resolve the byte size so
+  // reviewers can gauge the weight of a change without opening it. Removed
+  // assets are sized from the base ref; everything else from the head ref.
+  const isAsset = !isDirectory && isAssetFile(node.name);
+  const assetRef =
+    node.status === "removed" ? assetRefs?.baseRef : assetRefs?.headRef;
+  const { data: assetBytes } = useAssetSize({
+    org: assetRefs?.org ?? "",
+    repo: assetRefs?.repo ?? "",
+    path: node.path,
+    ref: assetRef,
+    enabled: isAsset && !!assetRefs,
+  });
+  const assetSize = isAsset ? formatBytes(assetBytes) : null;
 
   // A file is "viewed" when flagged. A directory is "viewed" when every
   // descendant file is viewed.
@@ -97,7 +118,7 @@ export function FileTreeNode({
       )}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
       aria-expanded={isDirectory ? isExpanded : undefined}
-      title={node.path}
+      title={assetSize ? `${node.path} · ${assetSize}` : node.path}
     >
       {/* Icon */}
       <span className="flex shrink-0 items-center">
@@ -156,6 +177,16 @@ export function FileTreeNode({
       {isDirectory && changes > 0 && (
         <span className="shrink-0 font-mono text-[10px] text-zinc-500">
           {`±${changes}`}
+        </span>
+      )}
+
+      {/* Byte size for asset files (images, PDFs, video, etc.) */}
+      {assetSize && (
+        <span
+          className="shrink-0 font-mono text-[10px] text-zinc-500"
+          title={`Asset size: ${assetSize}`}
+        >
+          {assetSize}
         </span>
       )}
 

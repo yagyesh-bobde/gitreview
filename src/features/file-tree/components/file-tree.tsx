@@ -10,10 +10,25 @@ import { collectFilePaths } from "../lib/file-tree-builder";
 import { useFileTree } from "../hooks/use-file-tree";
 import { FileTreeGroup } from "./file-tree-group";
 
+/**
+ * Context needed to resolve asset (image/PDF/video/etc.) file sizes via the
+ * authenticated raw-file proxy. Optional -- when absent, sizes aren't shown.
+ */
+export interface AssetRefs {
+  org: string;
+  repo: string;
+  /** Head commit sha -- the version of added/modified assets. */
+  headRef?: string;
+  /** Base commit sha -- used to size removed assets. */
+  baseRef?: string;
+}
+
 interface FileTreeProps {
   files: PRFile[];
   selectedFile: string | null;
   onFileSelect: (path: string) => void;
+  /** When provided, asset files show their byte size in the tree. */
+  assetRefs?: AssetRefs;
   className?: string;
 }
 
@@ -21,6 +36,7 @@ export function FileTree({
   files,
   selectedFile,
   onFileSelect,
+  assetRefs,
   className,
 }: FileTreeProps) {
   const {
@@ -120,6 +136,7 @@ export function FileTree({
           expandedPaths={expandedPaths}
           viewedFiles={viewedFiles}
           staleViewedFiles={staleViewedFiles}
+          assetRefs={assetRefs}
           onFileSelect={onFileSelect}
           onToggle={toggleDirectory}
           onToggleViewed={handleToggleViewed}

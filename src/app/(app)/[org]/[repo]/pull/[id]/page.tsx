@@ -118,6 +118,12 @@ export default function PullRequestPage({ params }: Props) {
                     files={files.data}
                     selectedFile={activeFile}
                     onFileSelect={handleFileSelect}
+                    assetRefs={{
+                      org,
+                      repo,
+                      headRef: pr.data?.head.sha,
+                      baseRef: pr.data?.base.sha,
+                    }}
                   />
                 ) : null
               }
