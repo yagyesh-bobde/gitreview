@@ -8,13 +8,29 @@ import {
   useRef,
   useState,
 } from 'react';
-import { CheckCircle2, ChevronDown, ChevronRight, Circle, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Circle,
+  Files,
+  Loader2,
+  Sparkles,
+} from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useReviewStore } from '@/stores/review-store';
 import { usePRDiff } from '@/features/github/hooks/use-pr-diff';
 import { buildFileDiff } from '../lib/parse-diff';
 import { isImageFile } from '../lib/diff-utils';
+import { useFileCategorization } from '../hooks/use-file-categorization';
+import {
+  groupFilesByCategory,
+  type CategoryFileGroup,
+} from '../lib/group-by-category';
+import { CATEGORY_DISPLAY } from '../lib/category-display';
+import { DIFF_CATEGORY_META } from '@/lib/ai/diff-categories';
 import type { PRFile } from '@/types/pr';
 import type { FileDiff, DiffHunk } from '../types';
 
@@ -23,6 +39,16 @@ import { ImageDiffView } from './image-diff-view';
 import { InlineDiff } from './inline-diff';
 import { ScrollToTopButton } from './scroll-to-top-button';
 import { useUIStore } from '@/stores/ui-store';
+
+/** Categories that default to collapsed — low-risk "noise" a reviewer can defer. */
+const DEFAULT_COLLAPSED_CATEGORIES = new Set([
+  'tests',
+  'configuration',
+  'dependencies',
+  'styling',
+  'documentation',
+  'other',
+]);
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -70,6 +96,25 @@ export function MultiFileDiffViewer({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
   const scrollToTopEnabled = useUIStore((s) => s.scrollToTopEnabled);
+  const groupByCategory = useUIStore((s) => s.groupByCategory);
+  const setGroupByCategory = useUIStore((s) => s.setGroupByCategory);
+
+  // AI categorization runs only while the category view is active.
+  const categorization = useFileCategorization(
+    org,
+    repo,
+    prNumber,
+    files,
+    groupByCategory,
+  );
+
+  const categoryGroups = useMemo<CategoryFileGroup[] | null>(
+    () =>
+      categorization.data
+        ? groupFilesByCategory(files, categorization.data.categories)
+        : null,
+    [files, categorization.data],
+  );
 
   // Track which file headers are visible; the topmost one is the "active" file
   const headerRefs = useRef<Map<string, HTMLDivElement>>(new Map());
