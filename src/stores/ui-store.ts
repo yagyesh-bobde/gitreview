@@ -16,6 +16,9 @@ interface UIStore {
   /** Whether the scroll-to-top button is shown on the review page. Enabled by default. */
   scrollToTopEnabled: boolean;
 
+  /** Whether the diff viewer groups files into AI category accordions. */
+  groupByCategory: boolean;
+
   /** Repos the user has chosen to hide from the dashboard, persisted in localStorage */
   excludedRepos: string[];
 
@@ -25,6 +28,7 @@ interface UIStore {
   toggleConversation: () => void;
   setConversationOpen: (open: boolean) => void;
   setScrollToTopEnabled: (enabled: boolean) => void;
+  setGroupByCategory: (enabled: boolean) => void;
   toggleRepoExclusion: (repoFullName: string) => void;
   clearExcludedRepos: () => void;
 }
@@ -37,6 +41,7 @@ export const useUIStore = create<UIStore>()(
       dashboardView: 'ide',
       conversationOpen: false,
       scrollToTopEnabled: true,
+      groupByCategory: false,
       excludedRepos: [],
 
       setSidebarWidth: (width: number) =>
@@ -54,6 +59,8 @@ export const useUIStore = create<UIStore>()(
 
       setScrollToTopEnabled: (enabled: boolean) => set({ scrollToTopEnabled: enabled }),
 
+      setGroupByCategory: (enabled: boolean) => set({ groupByCategory: enabled }),
+
       toggleRepoExclusion: (repoFullName: string) =>
         set((state) => ({
           excludedRepos: state.excludedRepos.includes(repoFullName)
@@ -69,6 +76,7 @@ export const useUIStore = create<UIStore>()(
       partialize: (state) => ({
         dashboardView: state.dashboardView,
         scrollToTopEnabled: state.scrollToTopEnabled,
+        groupByCategory: state.groupByCategory,
         excludedRepos: state.excludedRepos,
       }),
     },
