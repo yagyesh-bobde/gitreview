@@ -4,9 +4,10 @@ import { getDb } from '@/lib/db';
 import { airaMessages, type NewAiraMessage } from '@/lib/db/schema';
 
 const MAX_MESSAGES_PER_BATCH = 100;
-const MAX_TEXT_LENGTH = 65_536;
+const MAX_TEXT_LENGTH = 16_384;
 const MAX_ID_LENGTH = 256;
-const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// Version-agnostic UUID (any RFC 4122 version 1-8), not pinned to v4.
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type AiraRole = 'user' | 'aira';
 
@@ -21,7 +22,13 @@ type ValidatedAiraMessage = {
 
 type ValidatedSyncBody = {
   userId: string;
-  messages: ValidatedAiraMessage[];
+  messages: unknown[];
+};
+
+type RejectedMessage = {
+  clientId?: string;
+  index: number;
+  error: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -37,7 +44,8 @@ function isAiraRole(value: unknown): value is AiraRole {
 }
 
 function validateOptionalString(value: unknown, fieldName: string): string | undefined {
-  if (value === undefined) {
+  // Columns are nullable, so treat JSON null the same as an omitted field.
+  if (value === undefined || value === null) {
     return undefined;
   }
   if (typeof value !== 'string') {
@@ -84,12 +92,17 @@ function validateMessage(value: unknown, index: number): ValidatedAiraMessage {
   };
 }
 
+/**
+ * Structural validation of the request body only. Individual messages are
+ * validated per-message in the handler so one malformed message cannot wedge
+ * an entire batch (clients retry batches until HTTP 200).
+ */
 function validateBody(value: unknown): ValidatedSyncBody {
   if (!isRecord(value)) {
     throw new Error('Body must be an object');
   }
-  if (typeof value.userId !== 'string' || !UUID_V4_REGEX.test(value.userId)) {
-    throw new Error('userId must be a uuid v4 string');
+  if (typeof value.userId !== 'string' || !UUID_REGEX.test(value.userId)) {
+    throw new Error('userId must be a uuid string');
   }
   if (!Array.isArray(value.messages)) {
     throw new Error('messages must be an array');
@@ -100,7 +113,7 @@ function validateBody(value: unknown): ValidatedSyncBody {
 
   return {
     userId: value.userId,
-    messages: value.messages.map((message, index) => validateMessage(message, index)),
+    messages: value.messages,
   };
 }
 
@@ -121,7 +134,9 @@ function secretsMatch(actual: string, expected: string): boolean {
 /**
  * POST /api/aira/sync
  *
- * Idempotently syncs Aira client messages into Postgres.
+ * Idempotently syncs Aira client messages into Postgres. Malformed messages are
+ * skipped and reported rather than failing the whole batch, so a client that
+ * retries until 200 can never be wedged by one permanently-bad message.
  */
 export async function POST(request: Request) {
   const syncSecret = process.env.AIRA_SYNC_SECRET;
@@ -149,7 +164,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const values: NewAiraMessage[] = body.messages.map((message) => ({
+  // Validate each message independently: collect the valid ones (deduped by
+  // clientId so a batch with repeats maps cleanly onto the (user_id, client_id)
+  // primary key) and record the rejected ones for the client to drop.
+  const validByClientId = new Map<string, ValidatedAiraMessage>();
+  const rejected: RejectedMessage[] = [];
+
+  body.messages.forEach((message, index) => {
+    try {
+      const validated = validateMessage(message, index);
+      validByClientId.set(validated.clientId, validated);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'invalid message';
+      const clientId =
+        isRecord(message) &&
+        isNonEmptyString(message.clientId) &&
+        message.clientId.length <= MAX_ID_LENGTH
+          ? message.clientId
+          : undefined;
+      rejected.push({ clientId, index, error: errorMessage });
+    }
+  });
+
+  const validMessages = [...validByClientId.values()];
+
+  // `accepted` counts every valid message we durably processed (newly inserted
+  // OR already present), so an idempotent full resync reports the real total
+  // rather than accepted: 0.
+  if (validMessages.length === 0) {
+    return NextResponse.json({ accepted: 0, rejected });
+  }
+
+  const values: NewAiraMessage[] = validMessages.map((message) => ({
     userId: body.userId,
     clientId: message.clientId,
     role: message.role,
@@ -159,12 +205,16 @@ export async function POST(request: Request) {
     createdAt: new Date(message.createdAt),
   }));
 
-  const db = getDb();
-  const inserted = await db
-    .insert(airaMessages)
-    .values(values)
-    .onConflictDoNothing({ target: [airaMessages.userId, airaMessages.clientId] })
-    .returning({ clientId: airaMessages.clientId });
+  try {
+    const db = getDb();
+    await db
+      .insert(airaMessages)
+      .values(values)
+      .onConflictDoNothing({ target: [airaMessages.userId, airaMessages.clientId] });
+  } catch (error) {
+    console.error('[aira/sync] database insert failed', error);
+    return NextResponse.json({ error: 'database error' }, { status: 500 });
+  }
 
-  return NextResponse.json({ accepted: inserted.length });
+  return NextResponse.json({ accepted: validMessages.length, rejected });
 }
