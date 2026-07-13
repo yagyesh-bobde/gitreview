@@ -15,6 +15,13 @@
       "when": 1772959200000,
       "tag": "0001_link_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783932646549,
+      "tag": "0002_superb_sway",
+      "breakpoints": true
     }
   ]
 }

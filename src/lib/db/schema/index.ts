@@ -7,3 +7,6 @@ export type { GitHubAccount, NewGitHubAccount } from './github-accounts';
 
 export { linkTokens } from './link-tokens';
 export type { LinkToken, NewLinkToken } from './link-tokens';
+
+export { airaMessages } from './aira-messages';
+export type { AiraMessage, NewAiraMessage } from './aira-messages';
