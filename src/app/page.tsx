@@ -352,7 +352,7 @@ export default async function HomePage() {
                           <div className="diff-line-num"></div>
                         </div>
                         <div className="diff-line-sign">-</div>
-                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">TOKEN_EXPIRY</span> <span className="op">=</span> <span className="num">3600</span> <span className="cmt">// 1 hour in seconds</span></div>
+                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">TOKEN_EXPIRY</span> <span className="op">=</span> <span className="num">3600</span> <span className="cmt">{"// 1 hour in seconds"}</span></div>
                       </div>
 
                       <div className="diff-line diff-line-add">
@@ -361,7 +361,7 @@ export default async function HomePage() {
                           <div className="diff-line-num">5</div>
                         </div>
                         <div className="diff-line-sign">+</div>
-                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">ACCESS_TOKEN_TTL</span> <span className="op">=</span> <span className="num">900</span>  <span className="cmt">// 15 minutes</span></div>
+                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">ACCESS_TOKEN_TTL</span> <span className="op">=</span> <span className="num">900</span>  <span className="cmt">{"// 15 minutes"}</span></div>
                       </div>
 
                       <div className="diff-line diff-line-add">
@@ -370,7 +370,7 @@ export default async function HomePage() {
                           <div className="diff-line-num">6</div>
                         </div>
                         <div className="diff-line-sign">+</div>
-                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">REFRESH_TOKEN_TTL</span> <span className="op">=</span> <span className="num">604800</span> <span className="cmt">// 7 days</span></div>
+                        <div className="diff-line-code"><span className="kw">const</span> <span className="prop">REFRESH_TOKEN_TTL</span> <span className="op">=</span> <span className="num">604800</span> <span className="cmt">{"// 7 days"}</span></div>
                       </div>
 
                       {/* Hunk 2 */}
