@@ -93,7 +93,7 @@ export function ReviewSubmitPanel({
       <div className="border-b border-zinc-800 px-3 py-2">
         <h3 className="text-xs font-medium text-zinc-300">Submit review</h3>
         {pendingCommentCount > 0 && (
-          <p className="mt-0.5 text-[11px] text-zinc-500">
+          <p className="mt-0.5 text-[11px] text-ui-muted">
             {pendingCommentCount} pending inline{' '}
             {pendingCommentCount === 1 ? 'comment' : 'comments'}
           </p>
@@ -108,7 +108,7 @@ export function ReviewSubmitPanel({
             onClick={() => setPreviewMode(false)}
             className={cn(
               'text-[11px] font-medium transition-colors',
-              !previewMode ? 'text-zinc-200' : 'text-zinc-500 hover:text-zinc-300',
+              !previewMode ? 'text-zinc-200' : 'text-ui-muted hover:text-zinc-300',
             )}
           >
             Write
@@ -118,7 +118,7 @@ export function ReviewSubmitPanel({
             onClick={() => setPreviewMode(true)}
             className={cn(
               'text-[11px] font-medium transition-colors',
-              previewMode ? 'text-zinc-200' : 'text-zinc-500 hover:text-zinc-300',
+              previewMode ? 'text-zinc-200' : 'text-ui-muted hover:text-zinc-300',
             )}
           >
             Preview
@@ -130,7 +130,7 @@ export function ReviewSubmitPanel({
             {body.trim() ? (
               <CommentBody body={body} compact />
             ) : (
-              <p className="text-xs italic text-zinc-600">
+              <p className="text-xs italic text-ui-faint">
                 Nothing to preview
               </p>
             )}
@@ -140,7 +140,7 @@ export function ReviewSubmitPanel({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Leave a comment on this pull request (optional)"
-            className="min-h-[60px] w-full resize-none rounded-md border border-zinc-800 bg-zinc-950/50 p-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none"
+            className="min-h-[60px] w-full resize-none rounded-md border border-zinc-800 bg-zinc-950/50 p-2 text-sm text-zinc-200 placeholder:text-ui-faint focus:border-zinc-700 focus:outline-none"
             disabled={isSubmitting}
           />
         )}
@@ -173,7 +173,7 @@ export function ReviewSubmitPanel({
               <Icon
                 className={cn(
                   'mt-0.5 size-4 shrink-0',
-                  isActive ? '' : 'text-zinc-600',
+                  isActive ? '' : 'text-ui-faint',
                 )}
               />
               <div className="min-w-0">
@@ -181,7 +181,7 @@ export function ReviewSubmitPanel({
                 <div
                   className={cn(
                     'mt-0.5 text-[11px]',
-                    isActive ? 'opacity-70' : 'text-zinc-600',
+                    isActive ? 'opacity-70' : 'text-ui-faint',
                   )}
                 >
                   {option.description}

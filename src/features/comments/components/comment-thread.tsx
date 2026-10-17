@@ -79,7 +79,7 @@ function CommentItem({ comment, isReply = false, compact = false }: CommentItemP
           </span>
           <time
             dateTime={comment.createdAt}
-            className="text-[11px] text-zinc-600"
+            className="text-[11px] text-ui-faint"
             title={new Date(comment.createdAt).toLocaleString()}
           >
             {timeAgo(comment.createdAt)}
@@ -162,7 +162,7 @@ export function CommentThread({
         <button
           type="button"
           onClick={() => setIsCollapsed(false)}
-          className="ml-8 flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+          className="ml-8 flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
         >
           <ChevronDown className="size-3" />
           Show {hiddenCount} hidden{' '}
@@ -195,7 +195,7 @@ export function CommentThread({
         <button
           type="button"
           onClick={() => setIsCollapsed(true)}
-          className="ml-8 flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+          className="ml-8 flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
         >
           <ChevronUp className="size-3" />
           Collapse replies
@@ -219,7 +219,7 @@ export function CommentThread({
             <button
               type="button"
               onClick={() => setShowReplyForm(true)}
-              className="flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-800/80 hover:text-zinc-300"
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-[11px] text-ui-muted transition-colors hover:bg-zinc-800/80 hover:text-zinc-300"
             >
               <CornerDownRight className="size-3" />
               Reply

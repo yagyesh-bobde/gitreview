@@ -58,10 +58,10 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
       </div>
 
       {/* Branches */}
-      <div className="flex items-center gap-1 text-zinc-500">
+      <div className="flex items-center gap-1 text-ui-muted">
         <GitBranch className="size-3.5" />
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.head.ref}</code>
-        <span className="text-zinc-600">into</span>
+        <span className="text-ui-faint">into</span>
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-zinc-300">{pr.base.ref}</code>
       </div>
 
@@ -69,7 +69,7 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
       <ActiveAccountBadge />
 
       {/* Stats */}
-      <div className="ml-auto flex items-center gap-3 text-zinc-500">
+      <div className="ml-auto flex items-center gap-3 text-ui-muted">
         <span className="flex items-center gap-1">
           <Plus className="size-3 text-green-500" />
           <span className="text-green-500">{pr.additions}</span>
@@ -90,7 +90,7 @@ export function PRMetadataBar({ pr, isLoading }: PRMetadataBarProps) {
             'flex items-center gap-1.5 rounded px-1.5 py-1 transition-colors',
             conversationOpen
               ? 'bg-zinc-800 text-zinc-200'
-              : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+              : 'text-ui-muted hover:bg-zinc-800 hover:text-zinc-300',
           )}
           aria-label={conversationOpen ? 'Close conversation' : 'Open conversation'}
           aria-pressed={conversationOpen}

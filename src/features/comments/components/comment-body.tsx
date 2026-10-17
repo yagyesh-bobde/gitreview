@@ -26,7 +26,7 @@ export const CommentBody = memo(function CommentBody({
 }: CommentBodyProps) {
   if (!body.trim()) {
     return (
-      <p className={cn('text-sm italic text-zinc-500', className)}>
+      <p className={cn('text-sm italic text-ui-muted', className)}>
         No description provided.
       </p>
     );
@@ -199,7 +199,7 @@ export const CommentBody = memo(function CommentBody({
 
           // Strikethrough
           del: ({ children }) => (
-            <del className="text-zinc-500 line-through">{children}</del>
+            <del className="text-ui-muted line-through">{children}</del>
           ),
 
           // Strong / em

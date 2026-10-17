@@ -83,7 +83,7 @@ export function InlineCommentThread({
           </div>
         )}
 
-        <MessageSquare className="size-3 text-zinc-500" />
+        <MessageSquare className="size-3 text-ui-muted" />
 
         <span className="text-[11px] text-zinc-400">
           <span className="font-medium text-zinc-300">
@@ -94,12 +94,12 @@ export function InlineCommentThread({
             : ''}
         </span>
 
-        <span className="ml-auto text-[11px] text-zinc-600 line-clamp-1 max-w-[300px]">
+        <span className="ml-auto text-[11px] text-ui-faint line-clamp-1 max-w-[300px]">
           {previewText.slice(0, 80)}
           {previewText.length > 80 ? '...' : ''}
         </span>
 
-        <ChevronRight className="ml-1 size-3 shrink-0 text-zinc-600" />
+        <ChevronRight className="ml-1 size-3 shrink-0 text-ui-faint" />
       </button>
     );
   }
@@ -111,11 +111,11 @@ export function InlineCommentThread({
       <button
         type="button"
         onClick={() => toggleThread(key)}
-        className="flex w-full items-center gap-1.5 border-b border-zinc-800/50 px-3 py-1 text-[11px] text-zinc-500 transition-colors hover:bg-zinc-800/40 hover:text-zinc-300"
+        className="flex w-full items-center gap-1.5 border-b border-zinc-800/50 px-3 py-1 text-[11px] text-ui-muted transition-colors hover:bg-zinc-800/40 hover:text-zinc-300"
       >
         <ChevronRight className="size-3 rotate-90" />
         {thread.path && (
-          <span className="font-mono text-zinc-600">
+          <span className="font-mono text-ui-faint">
             {thread.path.split('/').pop()}:{thread.line}
           </span>
         )}

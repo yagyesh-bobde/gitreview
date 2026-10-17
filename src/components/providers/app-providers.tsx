@@ -7,10 +7,12 @@ import { PostHogProvider } from '@/components/providers/posthog-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { KeyboardProvider } from '@/features/keyboard';
 import { ShortcutsModal } from '@/features/keyboard';
+import { AccentThemeSync } from '@/components/providers/accent-theme-sync';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
+      <AccentThemeSync />
       <AuthSessionProvider>
         <PostHogProvider>
           <QueryProvider>

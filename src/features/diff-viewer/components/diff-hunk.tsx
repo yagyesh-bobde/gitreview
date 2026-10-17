@@ -37,7 +37,7 @@ export const DiffHunkHeader = memo(function DiffHunkHeader({
           {header.match(/@@ .+? @@/)?.[0] ?? header}
         </span>
         {context && (
-          <span className="ml-2 text-zinc-500">{context}</span>
+          <span className="ml-2 text-ui-muted">{context}</span>
         )}
       </div>
     </div>
@@ -63,7 +63,7 @@ export const SplitDiffHunkHeader = memo(function SplitDiffHunkHeader({
           {header.match(/@@ .+? @@/)?.[0] ?? header}
         </span>
         {context && (
-          <span className="ml-2 text-zinc-500">{context}</span>
+          <span className="ml-2 text-ui-muted">{context}</span>
         )}
       </div>
     </div>

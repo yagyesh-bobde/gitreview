@@ -124,11 +124,11 @@ export const DiffHeader = memo(function DiffHeader({
         <div className="flex items-center gap-1.5 truncate font-mono text-sm">
           {fileDiff.isRenamed && fileDiff.oldFilename && (
             <>
-              <span className="text-zinc-500">{fileDiff.oldFilename}</span>
-              <ArrowRight className="h-3 w-3 shrink-0 text-zinc-500" />
+              <span className="text-ui-muted">{fileDiff.oldFilename}</span>
+              <ArrowRight className="h-3 w-3 shrink-0 text-ui-muted" />
             </>
           )}
-          <span className="text-zinc-500">{directory}</span>
+          <span className="text-ui-muted">{directory}</span>
           <span className="text-zinc-200">{basename}</span>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const DiffHeader = memo(function DiffHeader({
       {/* Copy filename */}
       <button
         type="button"
-        className="shrink-0 rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+        className="shrink-0 rounded p-1 text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
         onClick={handleCopy}
         title="Copy filename"
       >
@@ -174,7 +174,7 @@ export const DiffHeader = memo(function DiffHeader({
           'flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',
           isViewed
             ? 'bg-green-500/15 text-green-400'
-            : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+            : 'text-ui-muted hover:bg-zinc-800 hover:text-zinc-300',
         )}
         onClick={() => toggleFileViewed(fileDiff.filename)}
         title={isViewed ? 'Mark as unviewed' : 'Mark as viewed'}
@@ -208,7 +208,7 @@ function ViewModeToggle({
           'flex items-center gap-1 rounded-l-md px-2 py-1 text-xs transition-colors',
           viewMode === 'unified'
             ? 'bg-zinc-700/50 text-zinc-200'
-            : 'text-zinc-500 hover:text-zinc-300',
+            : 'text-ui-muted hover:text-zinc-300',
         )}
         onClick={() => onChange('unified')}
         title="Unified view"
@@ -222,7 +222,7 @@ function ViewModeToggle({
           'flex items-center gap-1 rounded-r-md px-2 py-1 text-xs transition-colors',
           viewMode === 'split'
             ? 'bg-zinc-700/50 text-zinc-200'
-            : 'text-zinc-500 hover:text-zinc-300',
+            : 'text-ui-muted hover:text-zinc-300',
         )}
         onClick={() => onChange('split')}
         title="Split view"

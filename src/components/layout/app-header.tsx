@@ -56,7 +56,7 @@ export function AppHeader({ pr, org, repo, isLoading }: AppHeaderProps) {
           <span className="hidden sm:inline">GitReview</span>
         </Link>
         {org && repo && (
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <div className="flex items-center gap-1.5 text-xs text-ui-muted">
             <span>/</span>
             <span className="text-zinc-400">
               {org}/{repo}
@@ -73,7 +73,7 @@ export function AppHeader({ pr, org, repo, isLoading }: AppHeaderProps) {
           <>
             <StateBadge state={pr.state} draft={pr.draft} />
             <h1 className="truncate text-sm font-medium text-zinc-200">{pr.title}</h1>
-            <span className="shrink-0 text-sm text-zinc-500">#{pr.number}</span>
+            <span className="shrink-0 text-sm text-ui-muted">#{pr.number}</span>
           </>
         ) : null}
       </div>

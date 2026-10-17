@@ -110,10 +110,9 @@ export function FileTreeNode({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group flex w-full cursor-pointer items-center gap-1.5 rounded-sm px-2 py-1 text-left text-sm transition-colors duration-150",
-        "hover:bg-zinc-800",
-        isSelected && !isDirectory && "bg-zinc-700 text-white",
-        !isSelected && "text-zinc-400",
+        "group flex w-full cursor-pointer items-center gap-1.5 rounded-sm border-l-2 border-transparent px-2 py-1 text-left text-sm transition-colors duration-150",
+        isSelected && !isDirectory ? "border-ui-accent bg-ui-selected text-white" : "hover:bg-ui-hover",
+        !isSelected && "text-ui-dir",
         isViewed && !isSelected && "opacity-60"
       )}
       style={{ paddingLeft: `${depth * 12 + 8}px` }}
@@ -124,12 +123,12 @@ export function FileTreeNode({
       <span className="flex shrink-0 items-center">
         {isDirectory ? (
           isExpanded ? (
-            <FolderOpen className="size-4 text-zinc-500" />
+            <FolderOpen className="size-4 text-ui-icon" />
           ) : (
-            <Folder className="size-4 text-zinc-500" />
+            <Folder className="size-4 text-ui-icon" />
           )
         ) : (
-          <File className="size-4 text-zinc-500" />
+          <File className="size-4 text-ui-file-icon" />
         )}
       </span>
 
@@ -175,7 +174,7 @@ export function FileTreeNode({
 
       {/* Aggregated stats for directories */}
       {isDirectory && changes > 0 && (
-        <span className="shrink-0 font-mono text-[10px] text-zinc-500">
+        <span className="shrink-0 font-mono text-[10px] text-ui-muted">
           {`±${changes}`}
         </span>
       )}
@@ -183,7 +182,7 @@ export function FileTreeNode({
       {/* Byte size for asset files (images, PDFs, video, etc.) */}
       {assetSize && (
         <span
-          className="shrink-0 font-mono text-[10px] text-zinc-500"
+          className="shrink-0 font-mono text-[10px] text-ui-muted"
           title={`Asset size: ${assetSize}`}
         >
           {assetSize}
@@ -206,7 +205,7 @@ export function FileTreeNode({
           "flex shrink-0 items-center rounded p-0.5 transition-colors",
           isViewed
             ? "text-green-400"
-            : "text-zinc-600 opacity-0 hover:text-zinc-300 group-hover:opacity-100"
+            : "text-ui-faint opacity-0 hover:text-zinc-300 group-hover:opacity-100"
         )}
         title={
           isDirectory

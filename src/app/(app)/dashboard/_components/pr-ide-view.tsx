@@ -182,7 +182,7 @@ function Sidebar({
     <aside className="w-56 shrink-0 border-r border-zinc-800/60 bg-zinc-950 flex-col overflow-hidden hidden sm:flex">
       {/* Filters section */}
       <div className="px-3 pt-3 pb-1">
-        <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-1 mb-1.5 font-mono">
+        <p className="text-[10px] font-semibold text-ui-faint uppercase tracking-widest px-1 mb-1.5 font-mono">
           Filters
         </p>
         {filters.map((f) => {
@@ -198,15 +198,15 @@ function Sidebar({
               className={cn(
                 'w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono transition-colors',
                 isActive
-                  ? 'bg-orange-500/10 text-orange-400'
-                  : 'text-zinc-500 hover:bg-white/[0.04]',
+                  ? 'bg-ui-selected text-ui-accent-text'
+                  : 'text-ui-muted hover:bg-ui-hover',
               )}
             >
               <Icon
-                className={cn('size-3.5 shrink-0', isActive ? 'text-orange-400' : 'text-zinc-600')}
+                className={cn('size-3.5 shrink-0', isActive ? 'text-ui-accent-text' : 'text-ui-faint')}
               />
-              <span className={isActive ? 'text-orange-400' : ''}>{f.label}</span>
-              <span className="ml-auto text-[10px] bg-zinc-800 text-zinc-500 rounded px-1.5 py-0.5 font-mono">
+              <span className={isActive ? 'text-ui-accent-text' : ''}>{f.label}</span>
+              <span className="ml-auto text-[10px] bg-zinc-800 text-ui-muted rounded px-1.5 py-0.5 font-mono">
                 {f.count}
               </span>
             </button>
@@ -218,7 +218,7 @@ function Sidebar({
 
       {/* Repositories section */}
       <div className="px-3 pb-2 flex-1 overflow-y-auto">
-        <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest px-1 mb-1.5 font-mono">
+        <p className="text-[10px] font-semibold text-ui-faint uppercase tracking-widest px-1 mb-1.5 font-mono">
           Repositories
         </p>
 
@@ -226,11 +226,11 @@ function Sidebar({
           <div key={group.org} className="mb-1">
             <button
               onClick={() => setSelectedRepo(null)}
-              className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-white/[0.04] transition-colors"
+              className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-ui-hover transition-colors"
             >
               <ActivityDot active={group.hasRecent} />
               <span className="text-zinc-400 font-mono truncate flex-1">{group.org}</span>
-              <span className="text-[10px] text-zinc-600 font-mono">{group.prCount}</span>
+              <span className="text-[10px] text-ui-faint font-mono">{group.prCount}</span>
             </button>
             <div className="pl-5 space-y-0.5">
               {group.repos.map((repo) => {
@@ -246,12 +246,12 @@ function Sidebar({
                         isExcluded
                           ? 'text-zinc-700 line-through'
                           : isSelected
-                            ? 'bg-orange-500/10 text-orange-400'
-                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900',
+                            ? 'bg-ui-selected text-ui-accent-text'
+                            : 'text-ui-muted hover:text-zinc-300 hover:bg-ui-hover',
                       )}
                     >
                       <svg
-                        className="size-3 text-zinc-700 shrink-0"
+                        className="size-3 text-ui-icon shrink-0"
                         fill="currentColor"
                         viewBox="0 0 16 16"
                       >
@@ -268,7 +268,7 @@ function Sidebar({
                       className={cn(
                         'shrink-0 p-1 rounded-r transition-colors',
                         isExcluded
-                          ? 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800'
+                          ? 'text-ui-faint hover:text-zinc-400 hover:bg-zinc-800'
                           : 'text-zinc-700 hover:text-zinc-400 hover:bg-zinc-800 opacity-0 group-hover/repo:opacity-100',
                       )}
                     >
@@ -284,7 +284,7 @@ function Sidebar({
 
       {/* Bottom sidebar */}
       <div className="border-t border-zinc-800/50 px-3 py-2">
-        <button className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.04] transition-colors">
+        <button className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono text-ui-faint hover:text-zinc-400 hover:bg-ui-hover transition-colors">
           <Settings className="size-3.5 shrink-0" />
           Settings
         </button>
@@ -321,8 +321,8 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
       className={cn(
         'flex items-center gap-4 px-4 py-3 cursor-pointer transition-[background,border-color] duration-100 border-l-2 border-b border-b-zinc-800/30',
         isSelected
-          ? 'bg-orange-500/[0.08] border-l-orange-500'
-          : 'border-l-transparent hover:bg-white/[0.035] hover:border-l-zinc-700',
+          ? 'bg-ui-selected border-l-ui-accent'
+          : 'border-l-transparent hover:bg-ui-hover hover:border-l-ui-faint',
       )}
     >
       {/* Activity dot */}
@@ -344,8 +344,8 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
           <CompactBadge state={pr.state} draft={pr.draft} />
           {showReviewBadge && <ReviewBadge />}
         </div>
-        <div className="flex items-center gap-2 text-xs font-mono text-zinc-600">
-          <span className={isSelected ? 'text-orange-400/70' : 'text-zinc-500'}>
+        <div className="flex items-center gap-2 text-xs font-mono text-ui-faint">
+          <span className={isSelected ? 'text-ui-accent-text/70' : 'text-ui-muted'}>
             #{pr.number}
           </span>
           <span className="text-zinc-700">·</span>
@@ -357,7 +357,7 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
 
       {/* Repository column */}
       <div className="w-36 hidden md:block shrink-0">
-        <span className="text-xs font-mono text-zinc-500 truncate block">{repo}</span>
+        <span className="text-xs font-mono text-ui-muted truncate block">{repo}</span>
       </div>
 
       {/* Author */}
@@ -370,7 +370,7 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
             height={16}
             className="rounded-full shrink-0"
           />
-          <span className="text-xs font-mono text-zinc-500 truncate">
+          <span className="text-xs font-mono text-ui-muted truncate">
             {pr.author.login.length > 9 ? pr.author.login.slice(0, 9) : pr.author.login}
           </span>
         </div>
@@ -378,7 +378,7 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
 
       {/* Updated */}
       <div className="w-24 shrink-0 text-right">
-        <span className={cn('text-xs font-mono', isRecent ? 'text-zinc-500' : 'text-zinc-600')}>
+        <span className={cn('text-xs font-mono', isRecent ? 'text-ui-muted' : 'text-ui-faint')}>
           {shortRelativeTime(pr.updatedAt)}
         </span>
       </div>
@@ -393,7 +393,7 @@ function IDERow({ pr, isSelected, onClick, showReviewBadge }: IDERowProps) {
 function SectionDivider({ label, count }: { label: string; count: number }) {
   return (
     <div className="px-4 py-2 bg-zinc-900/40 border-t border-b border-zinc-800/50 flex items-center gap-2">
-      <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">{label}</span>
+      <span className="text-[10px] font-mono text-ui-faint uppercase tracking-widest">{label}</span>
       <span className="text-[10px] font-mono text-zinc-700 bg-zinc-800 rounded px-1.5">{count}</span>
     </div>
   );
@@ -415,23 +415,23 @@ function StatusBar({ openCount, repoCount, githubLogins }: StatusBarProps) {
       className="shrink-0 bg-[#0d0d0f] border-t border-zinc-800/70 h-6 flex items-center px-3 gap-4 select-none"
     >
       <div className="flex items-center gap-3 flex-1 min-w-0">
-        <span className="flex items-center gap-1 text-[11px] font-mono text-zinc-600 px-1.5">
+        <span className="flex items-center gap-1 text-[11px] font-mono text-ui-faint px-1.5">
           <div className="size-1.5 bg-emerald-500 rounded-full" />
           Connected
         </span>
-        <span className="text-[11px] font-mono text-zinc-600 px-1.5 hidden sm:block">
+        <span className="text-[11px] font-mono text-ui-faint px-1.5 hidden sm:block">
           {openCount} open PR{openCount !== 1 ? 's' : ''}
         </span>
-        <span className="text-[11px] font-mono text-zinc-600 px-1.5 hidden md:block">
+        <span className="text-[11px] font-mono text-ui-faint px-1.5 hidden md:block">
           {repoCount} repo{repoCount !== 1 ? 's' : ''}
         </span>
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <span className="text-[11px] font-mono text-zinc-600 px-1.5 hidden lg:block">
+        <span className="text-[11px] font-mono text-ui-faint px-1.5 hidden lg:block">
           Last synced: just now
         </span>
         {githubLogins.length > 0 && (
-          <span className="text-[11px] font-mono text-zinc-600 px-1.5">{githubLogins.join(', ')}</span>
+          <span className="text-[11px] font-mono text-ui-faint px-1.5">{githubLogins.join(', ')}</span>
         )}
       </div>
     </footer>
@@ -604,7 +604,7 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
           <div className="bg-[#111113] border-b border-zinc-800/70 px-4 py-2.5 flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3">
               <h2 className="text-sm font-semibold text-zinc-200 font-mono">pull-requests</h2>
-              <span className="text-xs font-mono text-zinc-600 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">
+              <span className="text-xs font-mono text-ui-faint bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">
                 {filteredPRs.length} open
               </span>
               {excludedRepos.length > 0 && (
@@ -632,7 +632,7 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-zinc-600 pointer-events-none" />
+                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-ui-faint pointer-events-none" />
               </div>
               <div className="relative">
                 <select
@@ -644,9 +644,9 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
                   <option value="ready">ready</option>
                   <option value="draft">drafts</option>
                 </select>
-                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-zinc-600 pointer-events-none" />
+                <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 size-2.5 text-ui-faint pointer-events-none" />
               </div>
-              <button className="text-xs font-mono text-zinc-500 hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors flex items-center gap-1.5">
+              <button className="text-xs font-mono text-ui-muted hover:text-zinc-300 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded px-2.5 py-1 transition-colors flex items-center gap-1.5">
                 <RefreshCw className="size-3" />
                 sync
               </button>
@@ -657,22 +657,22 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
           <div className="bg-zinc-950 border-b border-zinc-800/50 px-4 py-1.5 flex items-center gap-4 shrink-0">
             <div className="w-4 shrink-0" />
             <div className="flex-1 min-w-0">
-              <span className="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-semibold text-ui-faint uppercase tracking-wider">
                 Title
               </span>
             </div>
             <div className="w-36 hidden md:block shrink-0">
-              <span className="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-semibold text-ui-faint uppercase tracking-wider">
                 Repository
               </span>
             </div>
             <div className="w-20 hidden lg:block shrink-0">
-              <span className="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-semibold text-ui-faint uppercase tracking-wider">
                 Author
               </span>
             </div>
             <div className="w-24 shrink-0 text-right">
-              <span className="text-[10px] font-mono font-semibold text-zinc-600 uppercase tracking-wider">
+              <span className="text-[10px] font-mono font-semibold text-ui-faint uppercase tracking-wider">
                 Updated
               </span>
             </div>
@@ -681,13 +681,13 @@ export function PRIDEView({ prs, githubLogins }: PRIDEViewProps) {
           {/* PR table */}
           <div className="flex-1 overflow-y-auto">
             {filteredPRs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-zinc-500">
+              <div className="flex flex-col items-center justify-center h-full text-ui-muted">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth={1.5}
-                  className="size-10 text-zinc-600 mb-3"
+                  className="size-10 text-ui-faint mb-3"
                 >
                   <path
                     strokeLinecap="round"

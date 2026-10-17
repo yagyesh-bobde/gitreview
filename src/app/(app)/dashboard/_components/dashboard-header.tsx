@@ -24,7 +24,7 @@ function SearchTrigger() {
       className="flex flex-1 max-w-xs items-center gap-2 px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors text-left group"
     >
       <svg
-        className="size-3.5 text-zinc-500 shrink-0"
+        className="size-3.5 text-ui-muted shrink-0"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -36,7 +36,7 @@ function SearchTrigger() {
           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
         />
       </svg>
-      <span className="text-zinc-500 text-sm flex-1 group-hover:text-zinc-400 transition-colors">
+      <span className="text-ui-muted text-sm flex-1 group-hover:text-zinc-400 transition-colors">
         Search pull requests...
       </span>
       <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-white/[0.12] bg-white/[0.08] px-1.5 py-0.5 text-[11px] font-mono text-zinc-400 leading-none border-b-[2px]">
@@ -79,7 +79,7 @@ function ViewToggle() {
               'p-1.5 rounded transition-colors',
               isActive
                 ? 'bg-zinc-800 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300',
+                : 'text-ui-muted hover:text-zinc-300',
             )}
           >
             <Icon className="size-3.5" />

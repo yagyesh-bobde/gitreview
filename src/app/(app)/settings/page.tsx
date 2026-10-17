@@ -53,19 +53,19 @@ function SidebarItem({ item, isActive, onClick }: SidebarItemProps) {
         isActive
           ? 'bg-zinc-800 text-zinc-100'
           : item.comingSoon
-            ? 'cursor-default text-zinc-600'
+            ? 'cursor-default text-ui-faint'
             : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200',
       )}
     >
       <Icon
         className={cn(
           'size-4 shrink-0',
-          isActive ? 'text-zinc-200' : item.comingSoon ? 'text-zinc-700' : 'text-zinc-500',
+          isActive ? 'text-zinc-200' : item.comingSoon ? 'text-zinc-700' : 'text-ui-muted',
         )}
       />
       <span className="flex-1 text-left">{item.label}</span>
       {item.comingSoon && (
-        <span className="rounded-sm bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium leading-none text-zinc-500">
+        <span className="rounded-sm bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium leading-none text-ui-muted">
           Soon
         </span>
       )}

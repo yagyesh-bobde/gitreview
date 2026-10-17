@@ -54,10 +54,10 @@ export function SidebarLayout({ sidebar, children }: SidebarLayoutProps) {
       >
         {/* Sidebar header with collapse toggle */}
         <div className="flex h-10 items-center justify-between border-b border-zinc-800 px-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Files</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-ui-muted">Files</span>
           <button
             onClick={toggleSidebar}
-            className="flex size-6 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+            className="flex size-6 items-center justify-center rounded-md text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
             aria-label="Collapse sidebar"
           >
             <PanelLeftClose className="size-3.5" />
@@ -86,7 +86,7 @@ export function SidebarLayout({ sidebar, children }: SidebarLayoutProps) {
         <div className="flex shrink-0 flex-col border-r border-zinc-800 bg-zinc-900 p-1">
           <button
             onClick={toggleSidebar}
-            className="flex size-6 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+            className="flex size-6 items-center justify-center rounded-md text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
             aria-label="Expand sidebar"
           >
             <PanelLeft className="size-3.5" />

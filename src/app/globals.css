@@ -45,6 +45,57 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-ui-muted: var(--ui-muted);
+  --color-ui-faint: var(--ui-faint);
+  --color-ui-dir: var(--ui-dir);
+  --color-ui-icon: var(--ui-icon);
+  --color-ui-file-icon: var(--ui-file-icon);
+  --color-ui-hover: var(--ui-hover);
+  --color-ui-selected: var(--ui-selected);
+  --color-ui-accent: var(--ui-accent);
+  --color-ui-accent-text: var(--ui-accent-text);
+}
+
+/*
+ * Accent themes for muted text, folder icons and hover/selected rows.
+ * Chosen in Settings → Appearance; applied via <html data-accent="...">.
+ * Brand green is the default.
+ */
+:root,
+[data-accent='green'] {
+  --ui-muted: #8b958e;
+  --ui-faint: #646d67;
+  --ui-dir: #c3ccc6;
+  --ui-icon: #6fae86;
+  --ui-file-icon: #6b746e;
+  --ui-hover: rgb(34 197 94 / 0.06);
+  --ui-selected: rgb(34 197 94 / 0.14);
+  --ui-accent: #22c55e;
+  --ui-accent-text: #4ade80;
+}
+
+[data-accent='neutral'] {
+  --ui-muted: #8f8f8f;
+  --ui-faint: #666666;
+  --ui-dir: #c4c4c4;
+  --ui-icon: #8f8f8f;
+  --ui-file-icon: #6e6e6e;
+  --ui-hover: rgb(255 255 255 / 0.045);
+  --ui-selected: rgb(255 255 255 / 0.09);
+  --ui-accent: #e5e5e5;
+  --ui-accent-text: #f5f5f5;
+}
+
+[data-accent='blue'] {
+  --ui-muted: #8b93a3;
+  --ui-faint: #636b79;
+  --ui-dir: #c5cbd6;
+  --ui-icon: #6ea8fe;
+  --ui-file-icon: #6b7280;
+  --ui-hover: rgb(110 168 254 / 0.07);
+  --ui-selected: rgb(110 168 254 / 0.16);
+  --ui-accent: #6ea8fe;
+  --ui-accent-text: #93c0ff;
 }
 
 :root {

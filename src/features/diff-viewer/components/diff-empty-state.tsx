@@ -33,11 +33,11 @@ export function DiffEmptyState({ variant }: DiffEmptyStateProps) {
     <div className="flex h-full w-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-center">
         <div className="rounded-xl bg-zinc-800/50 p-4">
-          <Icon className="h-8 w-8 text-zinc-500" strokeWidth={1.5} />
+          <Icon className="h-8 w-8 text-ui-muted" strokeWidth={1.5} />
         </div>
         <div className="space-y-1">
           <p className="text-sm font-medium text-zinc-300">{title}</p>
-          <p className="text-xs text-zinc-500">{description}</p>
+          <p className="text-xs text-ui-muted">{description}</p>
         </div>
       </div>
     </div>

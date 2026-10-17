@@ -13,7 +13,7 @@ import {
 function PRIcon({ draft }: { draft?: boolean }) {
   if (draft) {
     return (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-zinc-500">
+      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-ui-muted">
         <path d="M4.75 7.25a.75.75 0 0 1 .75.75v4.25a.75.75 0 0 1-1.5 0V8a.75.75 0 0 1 .75-.75Zm3.25-2.5a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V5.5a.75.75 0 0 1 .75-.75Zm4 5a.75.75 0 0 1 .75.75v1.75a.75.75 0 0 1-1.5 0v-1.75a.75.75 0 0 1 .75-.75Z" />
       </svg>
     );

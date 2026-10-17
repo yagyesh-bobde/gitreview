@@ -126,7 +126,7 @@ function ReviewCard({ review }: { review: PRReview }) {
             {review.submittedAt && (
               <time
                 dateTime={review.submittedAt}
-                className="text-[11px] text-zinc-500"
+                className="text-[11px] text-ui-muted"
                 title={new Date(review.submittedAt).toLocaleString()}
               >
                 {timeAgo(review.submittedAt)}
@@ -143,7 +143,7 @@ function ReviewCard({ review }: { review: PRReview }) {
 
           {/* Inline comment count indicator */}
           {review.comments.length > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-zinc-500">
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ui-muted">
               <MessageSquare className="size-3" />
               {review.comments.length} inline{' '}
               {review.comments.length === 1 ? 'comment' : 'comments'}
@@ -195,7 +195,7 @@ function DiffHunkSnippet({ hunk, path }: { hunk: string; path: string }) {
     <div className="overflow-hidden rounded-t-lg border border-b-0 border-zinc-800/60">
       {/* File header bar */}
       <div className="flex items-center gap-1.5 border-b border-zinc-800/60 bg-zinc-900/80 px-3 py-1.5">
-        <FileCode2 className="size-3 shrink-0 text-zinc-500" />
+        <FileCode2 className="size-3 shrink-0 text-ui-muted" />
         <span className="truncate font-mono text-[11px] text-zinc-400">
           {filename}
         </span>
@@ -267,12 +267,12 @@ function FileCommentCard({ thread }: { thread: CommentThreadType }) {
       ) : (
         /* Fallback: file context badge (no hunk data) */
         <div className="mb-2 flex items-center gap-1.5">
-          <FileCode2 className="size-3 text-zinc-500" />
-          <span className="truncate font-mono text-[11px] text-zinc-500">
+          <FileCode2 className="size-3 text-ui-muted" />
+          <span className="truncate font-mono text-[11px] text-ui-muted">
             {thread.path}
           </span>
           {thread.line && (
-            <span className="shrink-0 text-[11px] text-zinc-600">
+            <span className="shrink-0 text-[11px] text-ui-faint">
               :{thread.line}
             </span>
           )}
@@ -310,7 +310,7 @@ function FileCommentCard({ thread }: { thread: CommentThreadType }) {
                 </span>
                 <time
                   dateTime={comment.createdAt}
-                  className="text-[11px] text-zinc-500"
+                  className="text-[11px] text-ui-muted"
                   title={new Date(comment.createdAt).toLocaleString()}
                 >
                   {timeAgo(comment.createdAt)}
@@ -420,8 +420,8 @@ export function PRConversation({
           className,
         )}
       >
-        <Loader2 className="size-5 animate-spin text-zinc-500" />
-        <p className="mt-2 text-xs text-zinc-500">Loading conversation...</p>
+        <Loader2 className="size-5 animate-spin text-ui-muted" />
+        <p className="mt-2 text-xs text-ui-muted">Loading conversation...</p>
       </div>
     );
   }
@@ -437,7 +437,7 @@ export function PRConversation({
       >
         <AlertCircle className="size-5 text-red-400" />
         <p className="text-xs text-zinc-400">Failed to load comments</p>
-        <p className="text-[11px] text-zinc-600">{error.message}</p>
+        <p className="text-[11px] text-ui-faint">{error.message}</p>
       </div>
     );
   }
@@ -449,10 +449,10 @@ export function PRConversation({
         {timeline.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12">
             <div className="flex size-10 items-center justify-center rounded-full bg-zinc-800/50">
-              <MessageSquare className="size-5 text-zinc-600" />
+              <MessageSquare className="size-5 text-ui-faint" />
             </div>
-            <p className="mt-3 text-[13px] text-zinc-500">No comments yet</p>
-            <p className="mt-0.5 text-[11px] text-zinc-600">
+            <p className="mt-3 text-[13px] text-ui-muted">No comments yet</p>
+            <p className="mt-0.5 text-[11px] text-ui-faint">
               Start the conversation below
             </p>
           </div>

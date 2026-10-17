@@ -110,7 +110,7 @@ export function CommentForm({
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
             activeTab === 'write'
               ? 'border-b-2 border-emerald-500 text-zinc-200'
-              : 'text-zinc-500 hover:text-zinc-300',
+              : 'text-ui-muted hover:text-zinc-300',
           )}
         >
           <Pencil className="size-3" />
@@ -123,7 +123,7 @@ export function CommentForm({
             'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
             activeTab === 'preview'
               ? 'border-b-2 border-emerald-500 text-zinc-200'
-              : 'text-zinc-500 hover:text-zinc-300',
+              : 'text-ui-muted hover:text-zinc-300',
           )}
         >
           <Eye className="size-3" />
@@ -142,7 +142,7 @@ export function CommentForm({
             placeholder={placeholder}
             disabled={isSubmitting}
             className={cn(
-              'w-full resize-none bg-transparent text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none',
+              'w-full resize-none bg-transparent text-sm text-zinc-300 placeholder:text-ui-faint focus:outline-none',
               compact ? 'min-h-[60px] p-1.5' : 'min-h-[64px] p-2',
             )}
             aria-label="Comment body"
@@ -154,7 +154,7 @@ export function CommentForm({
             )}
           >
             {isEmpty ? (
-              <p className="text-sm italic text-zinc-500">
+              <p className="text-sm italic text-ui-muted">
                 Nothing to preview
               </p>
             ) : (
@@ -171,7 +171,7 @@ export function CommentForm({
           compact && 'px-1.5 py-1',
         )}
       >
-        <span className="text-[11px] text-zinc-500">
+        <span className="text-[11px] text-ui-muted">
           <kbd className="rounded bg-zinc-800/80 px-1 py-0.5 font-mono text-[10px] text-zinc-400">
             {typeof navigator !== 'undefined' &&
             navigator.platform?.includes('Mac')

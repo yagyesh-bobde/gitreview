@@ -33,7 +33,7 @@ const EXT_COLORS: Record<string, string> = {
 
 function FileIcon({ filename }: { filename: string }) {
   const ext = filename.split('.').pop()?.toLowerCase() ?? '';
-  const color = EXT_COLORS[ext] ?? 'text-zinc-500';
+  const color = EXT_COLORS[ext] ?? 'text-ui-muted';
 
   return (
     <svg viewBox="0 0 16 16" fill="currentColor" className={`size-4 ${color}`}>

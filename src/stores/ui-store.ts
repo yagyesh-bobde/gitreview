@@ -7,6 +7,9 @@ const SIDEBAR_DEFAULT = 280;
 
 export type DashboardView = 'list' | 'ide';
 
+export const ACCENT_THEMES = ['green', 'neutral', 'blue'] as const;
+export type AccentTheme = (typeof ACCENT_THEMES)[number];
+
 interface UIStore {
   sidebarWidth: number;
   sidebarCollapsed: boolean;
@@ -19,6 +22,9 @@ interface UIStore {
   /** Whether the diff viewer groups files into AI category accordions. */
   groupByCategory: boolean;
 
+  /** Tint for muted text, folder icons and hover/selected rows. */
+  accentTheme: AccentTheme;
+
   /** Repos the user has chosen to hide from the dashboard, persisted in localStorage */
   excludedRepos: string[];
 
@@ -29,6 +35,7 @@ interface UIStore {
   setConversationOpen: (open: boolean) => void;
   setScrollToTopEnabled: (enabled: boolean) => void;
   setGroupByCategory: (enabled: boolean) => void;
+  setAccentTheme: (theme: AccentTheme) => void;
   toggleRepoExclusion: (repoFullName: string) => void;
   clearExcludedRepos: () => void;
 }
@@ -42,6 +49,7 @@ export const useUIStore = create<UIStore>()(
       conversationOpen: false,
       scrollToTopEnabled: true,
       groupByCategory: false,
+      accentTheme: 'green',
       excludedRepos: [],
 
       setSidebarWidth: (width: number) =>
@@ -61,6 +69,8 @@ export const useUIStore = create<UIStore>()(
 
       setGroupByCategory: (enabled: boolean) => set({ groupByCategory: enabled }),
 
+      setAccentTheme: (theme: AccentTheme) => set({ accentTheme: theme }),
+
       toggleRepoExclusion: (repoFullName: string) =>
         set((state) => ({
           excludedRepos: state.excludedRepos.includes(repoFullName)
@@ -77,6 +87,7 @@ export const useUIStore = create<UIStore>()(
         dashboardView: state.dashboardView,
         scrollToTopEnabled: state.scrollToTopEnabled,
         groupByCategory: state.groupByCategory,
+        accentTheme: state.accentTheme,
         excludedRepos: state.excludedRepos,
       }),
     },

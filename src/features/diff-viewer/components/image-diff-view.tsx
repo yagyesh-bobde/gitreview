@@ -54,7 +54,7 @@ export function ImageDiffView({
   if (!showOld && !showNew) {
     // No ref available to fetch either version (shouldn't normally happen).
     return (
-      <div className="flex items-center justify-center px-4 py-10 text-sm text-zinc-500">
+      <div className="flex items-center justify-center px-4 py-10 text-sm text-ui-muted">
         Image preview unavailable
       </div>
     );
@@ -114,7 +114,7 @@ function ImagePane({ label, tone, src }: ImagePaneProps) {
       <figcaption className="flex items-center justify-between gap-2 text-xs">
         <span className={cn('font-medium', TONE_CLASSES[tone])}>{label}</span>
         {dimensions && (
-          <span className="font-mono text-zinc-600">
+          <span className="font-mono text-ui-faint">
             {dimensions.w}×{dimensions.h}
           </span>
         )}
@@ -129,7 +129,7 @@ function ImagePane({ label, tone, src }: ImagePaneProps) {
         )}
       >
         {status === 'error' ? (
-          <div className="flex flex-col items-center gap-1.5 px-4 py-8 text-zinc-500">
+          <div className="flex flex-col items-center gap-1.5 px-4 py-8 text-ui-muted">
             <ImageOff className="h-5 w-5" />
             <span className="text-xs">Couldn&apos;t load image</span>
           </div>

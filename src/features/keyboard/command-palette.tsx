@@ -331,7 +331,7 @@ export function CommandPalette({
 
           {/* Search input */}
           <div className="flex items-center border-b border-zinc-700/80 px-4">
-            <SearchIcon className="mr-3 size-4 shrink-0 text-zinc-500" />
+            <SearchIcon className="mr-3 size-4 shrink-0 text-ui-muted" />
             <input
               ref={inputRef}
               type="text"
@@ -340,7 +340,7 @@ export function CommandPalette({
               placeholder={placeholder}
               className={cn(
                 'flex-1 bg-transparent py-3.5 text-sm text-zinc-100',
-                'placeholder:text-zinc-500 outline-none',
+                'placeholder:text-ui-muted outline-none',
               )}
               spellCheck={false}
               autoComplete="off"
@@ -348,7 +348,7 @@ export function CommandPalette({
             {query && (
               <button
                 onClick={() => updateQuery('')}
-                className="ml-2 rounded p-0.5 text-zinc-500 hover:text-zinc-300"
+                className="ml-2 rounded p-0.5 text-ui-muted hover:text-zinc-300"
                 tabIndex={-1}
               >
                 <XIcon className="size-3.5" />
@@ -365,7 +365,7 @@ export function CommandPalette({
             className="max-h-[340px] overflow-y-auto overscroll-contain py-1"
           >
             {displayItems.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-zinc-500">
+              <div className="px-4 py-8 text-center text-sm text-ui-muted">
                 {query.trim() ? emptyMessage : 'No items available.'}
               </div>
             ) : (
@@ -398,7 +398,7 @@ export function CommandPalette({
                     >
                       {/* Icon */}
                       {match.item.icon && (
-                        <span className="flex size-5 shrink-0 items-center justify-center text-zinc-500">
+                        <span className="flex size-5 shrink-0 items-center justify-center text-ui-muted">
                           {match.item.icon}
                         </span>
                       )}
@@ -414,14 +414,14 @@ export function CommandPalette({
                           <HighlightedText
                             text={match.item.description}
                             indices={match.descIndices}
-                            className="truncate text-xs text-zinc-500"
+                            className="truncate text-xs text-ui-muted"
                           />
                         </div>
                       </div>
 
                       {/* Selection indicator */}
                       {index === selectedIndex && (
-                        <kbd className="shrink-0 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-zinc-500">
+                        <kbd className="shrink-0 rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] text-ui-muted">
                           Enter
                         </kbd>
                       )}
@@ -433,7 +433,7 @@ export function CommandPalette({
           </div>
 
           {/* Footer hint */}
-          <div className="flex items-center gap-4 border-t border-zinc-700/80 px-4 py-2 text-[11px] text-zinc-500">
+          <div className="flex items-center gap-4 border-t border-zinc-700/80 px-4 py-2 text-[11px] text-ui-muted">
             <span className="flex items-center gap-1">
               <kbd className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px]">
                 ↑↓
@@ -465,7 +465,7 @@ export function CommandPalette({
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <div className="px-4 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+    <div className="px-4 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider text-ui-muted">
       {children}
     </div>
   );

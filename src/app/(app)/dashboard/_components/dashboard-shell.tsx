@@ -39,7 +39,7 @@ function ErrorState({
       <h3 className="mt-4 text-sm font-medium text-red-300">
         Failed to load pull requests
       </h3>
-      <p className="mt-1 text-sm text-zinc-500">{message}</p>
+      <p className="mt-1 text-sm text-ui-muted">{message}</p>
       <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
         Try again
       </Button>
@@ -59,7 +59,7 @@ function EmptyState() {
         fill="none"
         stroke="currentColor"
         strokeWidth={1.5}
-        className="size-12 text-zinc-600"
+        className="size-12 text-ui-faint"
       >
         <path
           strokeLinecap="round"
@@ -68,7 +68,7 @@ function EmptyState() {
         />
       </svg>
       <h3 className="mt-4 text-sm font-medium text-zinc-300">No pull requests</h3>
-      <p className="mt-1 text-sm text-zinc-500">
+      <p className="mt-1 text-sm text-ui-muted">
         Open PRs you authored or are requested to review will appear here.
       </p>
     </div>

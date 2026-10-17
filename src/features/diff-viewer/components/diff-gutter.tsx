@@ -49,7 +49,7 @@ export const DiffGutter = memo(function DiffGutter({
       {/* Old line number */}
       <button
         type="button"
-        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-zinc-500 hover:text-zinc-300"
+        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-ui-muted hover:text-zinc-300"
         onClick={onClick}
         tabIndex={-1}
         aria-label={
@@ -62,7 +62,7 @@ export const DiffGutter = memo(function DiffGutter({
       {/* New line number */}
       <button
         type="button"
-        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-zinc-500 hover:text-zinc-300"
+        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-ui-muted hover:text-zinc-300"
         onClick={onClick}
         tabIndex={-1}
         aria-label={
@@ -120,7 +120,7 @@ export const SplitGutter = memo(function SplitGutter({
     <div className="flex shrink-0 select-none" role="presentation">
       <button
         type="button"
-        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-zinc-500 hover:text-zinc-300"
+        className="w-[52px] shrink-0 cursor-pointer border-r border-zinc-700/50 px-2 text-right font-mono text-xs leading-5 text-ui-muted hover:text-zinc-300"
         onClick={onClick}
         tabIndex={-1}
         aria-label={lineNumber ? `Line ${lineNumber}` : undefined}

@@ -45,5 +45,5 @@ export const CATEGORY_DISPLAY: Record<DiffCategoryId, CategoryDisplay> = {
   dependencies: { icon: Package, accent: 'text-amber-400' },
   styling: { icon: Palette, accent: 'text-pink-400' },
   documentation: { icon: FileText, accent: 'text-zinc-400' },
-  other: { icon: AlertTriangle, accent: 'text-zinc-500' },
+  other: { icon: AlertTriangle, accent: 'text-ui-muted' },
 };

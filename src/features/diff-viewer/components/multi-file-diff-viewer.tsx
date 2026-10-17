@@ -399,13 +399,13 @@ function CollapsibleFileHeader({
         className="flex min-w-0 flex-1 items-center gap-2 text-left transition-colors"
       >
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 shrink-0 text-zinc-500" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-ui-muted" />
         ) : (
-          <ChevronDown className="h-4 w-4 shrink-0 text-zinc-500" />
+          <ChevronDown className="h-4 w-4 shrink-0 text-ui-muted" />
         )}
 
         <div className="min-w-0 flex-1 truncate font-mono text-sm">
-          <span className="text-zinc-500">{directory}</span>
+          <span className="text-ui-muted">{directory}</span>
           <span className="text-zinc-200">{basename}</span>
         </div>
       </button>
@@ -441,7 +441,7 @@ function CollapsibleFileHeader({
           'flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors',
           isViewed
             ? 'bg-emerald-500/15 text-emerald-400'
-            : 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300',
+            : 'text-ui-muted hover:bg-zinc-800 hover:text-zinc-300',
         )}
         title={isViewed ? 'Mark as unviewed' : 'Mark as viewed'}
       >
@@ -541,7 +541,7 @@ const FileDiffContent = memo(function FileDiffContent({
   if (!diff.data) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-sm text-zinc-500">No changes</p>
+        <p className="text-sm text-ui-muted">No changes</p>
       </div>
     );
   }
@@ -674,7 +674,7 @@ function FileDiffSkeleton() {
     <div className="flex flex-col gap-0 p-0">
       <div className="flex h-8 w-full items-center bg-zinc-800/30">
         <div className="ml-4 flex items-center gap-2">
-          <Loader2 className="h-3 w-3 animate-spin text-zinc-600" />
+          <Loader2 className="h-3 w-3 animate-spin text-ui-faint" />
           <div className="h-3 w-32 animate-pulse rounded bg-zinc-700/40" />
         </div>
       </div>

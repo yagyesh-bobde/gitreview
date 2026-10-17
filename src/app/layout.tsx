@@ -29,6 +29,8 @@ export const metadata: Metadata = {
   description: 'AI-powered code review tool for GitHub pull requests',
 };
 
+const ACCENT_BOOTSTRAP = `try{var a=JSON.parse(localStorage.getItem('gitreview-ui')||'{}').state.accentTheme;if(a)document.documentElement.dataset.accent=a}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,6 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply the persisted accent theme before paint to avoid a flash of the default. */}
+        <script dangerouslySetInnerHTML={{ __html: ACCENT_BOOTSTRAP }} />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} antialiased`}>
         <AppProviders>{children}</AppProviders>
         <Analytics />

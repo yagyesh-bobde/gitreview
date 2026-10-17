@@ -70,7 +70,7 @@ export function ShortcutsModal() {
             </DialogPrimitive.Title>
             <DialogPrimitive.Close
               className={cn(
-                'rounded-md p-1 text-zinc-500 transition-colors',
+                'rounded-md p-1 text-ui-muted transition-colors',
                 'hover:bg-zinc-800 hover:text-zinc-300',
               )}
             >
@@ -93,7 +93,7 @@ export function ShortcutsModal() {
           <div className="max-h-[400px] overflow-y-auto px-5 py-3">
             {groups.map((group) => (
               <div key={group.category} className="mb-4 last:mb-0">
-                <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-ui-muted">
                   {CATEGORY_LABELS[group.category]}
                 </h3>
                 <div className="space-y-0.5">
@@ -106,7 +106,7 @@ export function ShortcutsModal() {
                         <span className="text-sm text-zinc-200">
                           {shortcut.label}
                         </span>
-                        <span className="ml-2 text-xs text-zinc-500">
+                        <span className="ml-2 text-xs text-ui-muted">
                           {shortcut.description}
                         </span>
                       </div>
@@ -120,7 +120,7 @@ export function ShortcutsModal() {
 
           {/* Footer */}
           <div className="border-t border-zinc-700/80 px-5 py-3">
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-ui-muted">
               Press{' '}
               <kbd className="rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px] font-medium">
                 ?

@@ -84,7 +84,7 @@ export function FileTree({
 
   if (files.length === 0) {
     return (
-      <div className={cn("flex flex-col items-center justify-center py-8 text-zinc-500", className)}>
+      <div className={cn("flex flex-col items-center justify-center py-8 text-ui-muted", className)}>
         <FileText className="mb-2 size-8" />
         <p className="text-sm">No files changed</p>
       </div>
@@ -103,7 +103,7 @@ export function FileTree({
             <button
               type="button"
               onClick={expandAll}
-              className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+              className="rounded p-1 text-ui-muted transition-colors hover:bg-ui-hover hover:text-zinc-300"
               title="Expand all"
             >
               <ChevronsUpDown className="size-3.5" />
@@ -111,7 +111,7 @@ export function FileTree({
             <button
               type="button"
               onClick={collapseAll}
-              className="rounded p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+              className="rounded p-1 text-ui-muted transition-colors hover:bg-ui-hover hover:text-zinc-300"
               title="Collapse all"
             >
               <ChevronsDownUp className="size-3.5" />

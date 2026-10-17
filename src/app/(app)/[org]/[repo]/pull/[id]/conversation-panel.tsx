@@ -30,7 +30,7 @@ export function ConversationPanel({
         </span>
         <button
           onClick={() => setConversationOpen(false)}
-          className="flex size-6 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
+          className="flex size-6 items-center justify-center rounded-md text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"
           aria-label="Close conversation panel"
         >
           <X className="size-3.5" />

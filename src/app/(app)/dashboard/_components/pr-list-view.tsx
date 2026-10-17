@@ -47,7 +47,7 @@ function PRStatusIcon({ state, draft }: { state: PullRequestState; draft: boolea
   if (draft) {
     // Draft — grey dashed circle look
     return (
-      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-zinc-500">
+      <svg viewBox="0 0 16 16" fill="currentColor" className="size-4 text-ui-muted">
         <path d="M4.75 7.25a.75.75 0 0 1 .75.75v4.25a.75.75 0 0 1-1.5 0V8a.75.75 0 0 1 .75-.75Zm3.25-2.5a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0V5.5a.75.75 0 0 1 .75-.75Zm4 5a.75.75 0 0 1 .75.75v1.75a.75.75 0 0 1-1.5 0v-1.75a.75.75 0 0 1 .75-.75Z" />
       </svg>
     );
@@ -157,7 +157,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3 sm:gap-4 px-4 py-3.5 cursor-pointer transition-colors hover:bg-white/[0.03] border-b border-white/[0.06] last:border-b-0"
+      className="group flex items-center gap-3 sm:gap-4 px-4 py-3.5 cursor-pointer transition-colors hover:bg-ui-hover border-b border-white/[0.06] last:border-b-0"
     >
       {/* Status icon */}
       <div className="shrink-0 mt-0.5">
@@ -167,7 +167,7 @@ function PRRow({ pr }: { pr: PullRequest }) {
       {/* Title + meta */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-zinc-100 text-sm group-hover:text-orange-400 transition-colors truncate">
+          <span className="font-medium text-zinc-100 text-sm group-hover:text-ui-accent-text transition-colors truncate">
             {pr.title}
           </span>
           <StatusBadge state={pr.state} draft={pr.draft} />
@@ -178,29 +178,29 @@ function PRRow({ pr }: { pr: PullRequest }) {
           )}
         </div>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-xs text-zinc-500 font-mono">#{pr.number}</span>
+          <span className="text-xs text-ui-muted font-mono">#{pr.number}</span>
           <span className="text-zinc-700 text-xs">·</span>
-          <span className="text-xs text-zinc-500 truncate max-w-xs">
+          <span className="text-xs text-ui-muted truncate max-w-xs">
             {repoFullName}
           </span>
           <span className="text-zinc-700 text-xs hidden sm:inline">·</span>
-          <span className="text-xs text-zinc-600 hidden sm:inline">
-            opened by <span className="text-zinc-500">{pr.author.login}</span>
+          <span className="text-xs text-ui-faint hidden sm:inline">
+            opened by <span className="text-ui-muted">{pr.author.login}</span>
           </span>
         </div>
       </div>
 
       {/* Repository column */}
       <div className="w-36 hidden md:flex items-center gap-1.5 shrink-0">
-        <svg className="size-3.5 text-zinc-600 shrink-0" fill="currentColor" viewBox="0 0 16 16">
+        <svg className="size-3.5 text-ui-faint shrink-0" fill="currentColor" viewBox="0 0 16 16">
           <path d="M2 2.5A2.5 2.5 0 014.5 0h8.75a.75.75 0 01.75.75v12.5a.75.75 0 01-.75.75h-2.5a.75.75 0 010-1.5h1.75v-2h-8a1 1 0 00-.714 1.7.75.75 0 01-1.072 1.05A2.495 2.495 0 012 11.5v-9z" />
         </svg>
-        <span className="text-xs text-zinc-500 font-mono truncate">{repo}</span>
+        <span className="text-xs text-ui-muted font-mono truncate">{repo}</span>
       </div>
 
       {/* Timestamp */}
       <div className="w-28 shrink-0 text-right hidden lg:block">
-        <span className="text-xs text-zinc-500">{relativeTime(pr.updatedAt)}</span>
+        <span className="text-xs text-ui-muted">{relativeTime(pr.updatedAt)}</span>
       </div>
 
       {/* Chevron */}
@@ -342,7 +342,7 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
       {/* Page heading */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-zinc-100 mb-1">Pull Requests</h1>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-ui-muted">
           Track and review open pull requests across your repositories.
         </p>
       </div>
@@ -359,14 +359,14 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
                 'text-sm font-medium px-4 py-3 transition-colors whitespace-nowrap',
                 filter === tab.key
                   ? 'text-zinc-100'
-                  : 'text-zinc-500 hover:text-zinc-400',
+                  : 'text-ui-muted hover:text-zinc-400',
               )}
             >
               {tab.label}
               <span
                 className={cn(
                   'ml-1.5 text-xs rounded-full px-2 py-0.5 font-normal bg-zinc-800',
-                  filter === tab.key ? 'text-zinc-400' : 'text-zinc-500',
+                  filter === tab.key ? 'text-zinc-400' : 'text-ui-muted',
                 )}
               >
                 {tab.count}
@@ -388,12 +388,12 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
               <X className="size-3.5" />
             </button>
           )}
-          <span className="text-xs text-zinc-500 hidden sm:inline">Sort by</span>
+          <span className="text-xs text-ui-muted hidden sm:inline">Sort by</span>
           <div className="relative">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
-              className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors"
+              className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-ui-accent cursor-pointer transition-colors"
               style={{ colorScheme: 'dark' }}
             >
               {SORT_OPTIONS.map((opt) => (
@@ -402,20 +402,20 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-ui-muted pointer-events-none" />
           </div>
           <div className="relative">
             <select
               value={draftFilter}
               onChange={(e) => setDraftFilter(e.target.value as DraftFilter)}
-              className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors"
+              className="appearance-none bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-md pl-3 pr-8 py-1.5 hover:border-zinc-700 focus:outline-none focus:border-ui-accent cursor-pointer transition-colors"
               style={{ colorScheme: 'dark' }}
             >
               <option value="all" style={{ backgroundColor: '#18181b' }}>All PRs</option>
               <option value="ready" style={{ backgroundColor: '#18181b' }}>Ready</option>
               <option value="draft" style={{ backgroundColor: '#18181b' }}>Drafts</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-ui-muted pointer-events-none" />
           </div>
         </div>
       </div>
@@ -426,28 +426,28 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
         <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-2.5 flex items-center gap-3 sm:gap-4">
           <div className="w-4 shrink-0" />
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">
+            <span className="text-xs font-medium text-ui-muted uppercase tracking-widest">
               Pull Request
             </span>
           </div>
           <div className="w-36 hidden md:block shrink-0">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Repository</span>
+            <span className="text-xs font-medium text-ui-muted uppercase tracking-widest">Repository</span>
           </div>
           <div className="w-28 shrink-0 text-right hidden lg:block">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Updated</span>
+            <span className="text-xs font-medium text-ui-muted uppercase tracking-widest">Updated</span>
           </div>
           <div className="w-4 shrink-0 hidden sm:block" />
         </div>
 
         {/* PR rows */}
         {filteredPRs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+          <div className="flex flex-col items-center justify-center py-16 text-ui-muted">
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth={1.5}
-              className="size-10 text-zinc-600 mb-3"
+              className="size-10 text-ui-faint mb-3"
             >
               <path
                 strokeLinecap="round"
@@ -464,7 +464,7 @@ export function PRListView({ prs, githubLogins }: PRListViewProps) {
 
       {/* Footer meta */}
       <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-ui-faint">
           Showing {filteredPRs.length} open pull request{filteredPRs.length !== 1 ? 's' : ''}
         </p>
         <p className="text-xs text-zinc-700">Last synced just now</p>
