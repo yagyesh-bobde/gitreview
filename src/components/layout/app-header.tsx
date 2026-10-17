@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { GitPullRequest } from 'lucide-react';
+import { LogoMark } from '@/components/shared/logo-mark';
 import { UserMenu } from '@/features/auth/components/user-menu';
 import { cn } from '@/lib/utils/cn';
 
@@ -51,7 +52,7 @@ export function AppHeader({ pr, org, repo, isLoading }: AppHeaderProps) {
           href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"
         >
-          <GitPullRequest className="size-4" />
+          <LogoMark className="size-4" />
           <span className="hidden sm:inline">GitReview</span>
         </Link>
         {org && repo && (

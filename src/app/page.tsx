@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/features/auth/auth';
-import { GitPullRequest } from 'lucide-react';
+import { LogoMark } from '@/components/shared/logo-mark';
 import './landing.css';
 
 const GITHUB_REPO = 'yagyesh-bobde/gitreview';
@@ -51,12 +51,7 @@ export default async function HomePage() {
         <nav>
           <a href="#" className="nav-logo">
             <div className="nav-logo-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="18" r="3"/>
-                <circle cx="6" cy="6" r="3"/>
-                <path d="M13 6h3a2 2 0 0 1 2 2v7"/>
-                <line x1="6" x2="6" y1="9" y2="21"/>
-              </svg>
+              <LogoMark width={22} height={22} />
             </div>
             GitReview
           </a>
@@ -134,10 +129,7 @@ export default async function HomePage() {
                 <div className="browser-tabs">
                   <div className="browser-tab active">
                     <div className="tab-favicon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/>
-                        <path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/>
-                      </svg>
+                      <LogoMark width={10} height={10} />
                     </div>
                     GitReview — feat/auth-refactor #247
                   </div>

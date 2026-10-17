@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, List, LayoutGrid, GitPullRequest } from 'lucide-react';
+import { Bell, List, LayoutGrid } from 'lucide-react';
+import { LogoMark } from '@/components/shared/logo-mark';
 import { useUIStore, type DashboardView } from '@/stores/ui-store';
 import { useCommandPalette } from '@/features/keyboard';
 import { UserMenu } from '@/features/auth/components/user-menu';
@@ -118,7 +119,7 @@ export function DashboardHeader() {
           href="/dashboard"
           className="flex items-center gap-2 text-sm font-semibold text-zinc-200 transition-colors hover:text-white"
         >
-          <GitPullRequest className="size-4" />
+          <LogoMark className="size-4" />
           <span className="hidden sm:inline">GitReview</span>
         </Link>
       </div>
