@@ -12,6 +12,10 @@ declare module 'next-auth' {
   }
 }
 
+// GitHub returns `iss` on the OAuth callback (RFC 9207). Auth.js validates it
+// against `provider.issuer`, which the GitHub provider leaves unset.
+const GITHUB_ISSUER = 'https://github.com/login/oauth';
+
 /**
  * Base auth config that is safe for both Edge (middleware) and Node.js runtimes.
  *
@@ -22,6 +26,7 @@ declare module 'next-auth' {
 export const authConfig: NextAuthConfig = {
   providers: [
     GitHub({
+      issuer: GITHUB_ISSUER,
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       authorization: {
@@ -31,6 +36,7 @@ export const authConfig: NextAuthConfig = {
     GitHub({
       id: 'github-link',
       name: 'GitHub (Link Account)',
+      issuer: GITHUB_ISSUER,
       clientId: process.env.GITHUB_LINK_CLIENT_ID ?? process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_LINK_CLIENT_SECRET ?? process.env.GITHUB_CLIENT_SECRET,
       authorization: {
