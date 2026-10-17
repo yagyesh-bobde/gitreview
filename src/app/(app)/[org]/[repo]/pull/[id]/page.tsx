@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useCallback } from 'react';
+import { use, useEffect, useCallback, useRef } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { FileTree } from '@/features/file-tree/components/file-tree';
@@ -16,6 +16,7 @@ import { ErrorBoundary } from '@/components/shared/error-boundary';
 import { PageError } from './page-error';
 import { ReviewPalette } from './review-palette';
 import { ConversationPanel } from './conversation-panel';
+import { CollapsibleHeader } from './collapsible-header';
 import { track, AnalyticsEvent } from '@/lib/analytics/events';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 
 export default function PullRequestPage({ params }: Props) {
   const { org, repo, id } = use(params);
+  const pageRef = useRef<HTMLDivElement>(null);
   const activeFile = useReviewStore((s) => s.activeFile);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
   const hydratePR = useReviewStore((s) => s.hydratePR);
@@ -84,26 +86,28 @@ export default function PullRequestPage({ params }: Props) {
   return (
     <ErrorBoundary>
       <ReviewPalette org={org} repo={repo} prNumber={prNumber} />
-      <div className="flex h-full flex-col">
-        <AppHeader
-          pr={
-            pr.data
-              ? {
-                  title: pr.data.title,
-                  number: pr.data.number,
-                  state: pr.data.state,
-                  draft: pr.data.draft,
-                }
-              : null
-          }
-          org={org}
-          repo={repo}
-          isLoading={pr.isLoading}
-        />
+      <div ref={pageRef} className="flex h-full flex-col">
+        <CollapsibleHeader scrollRoot={pageRef}>
+          <AppHeader
+            pr={
+              pr.data
+                ? {
+                    title: pr.data.title,
+                    number: pr.data.number,
+                    state: pr.data.state,
+                    draft: pr.data.draft,
+                  }
+                : null
+            }
+            org={org}
+            repo={repo}
+            isLoading={pr.isLoading}
+          />
+
+          <PRMetadataBar pr={pr.data ?? null} isLoading={pr.isLoading} />
+        </CollapsibleHeader>
 
         <ReviewRefreshBanner org={org} repo={repo} prNumber={prNumber} />
-
-        <PRMetadataBar pr={pr.data ?? null} isLoading={pr.isLoading} />
 
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1">
@@ -139,9 +143,7 @@ export default function PullRequestPage({ params }: Props) {
             </SidebarLayout>
           </div>
 
-          {conversationOpen && (
-            <ConversationPanel org={org} repo={repo} prNumber={prNumber} />
-          )}
+          {conversationOpen && <ConversationPanel org={org} repo={repo} prNumber={prNumber} />}
         </div>
       </div>
     </ErrorBoundary>
@@ -154,11 +156,7 @@ function FileTreeSkeleton() {
   return (
     <div className="space-y-1 p-3">
       {SKELETON_WIDTHS.map((w, i) => (
-        <div
-          key={i}
-          className="h-5 animate-pulse rounded bg-zinc-800"
-          style={{ width: w }}
-        />
+        <div key={i} className="h-5 animate-pulse rounded bg-zinc-800" style={{ width: w }} />
       ))}
     </div>
   );

@@ -217,6 +217,7 @@ export function MultiFileDiffViewer({
     <div className="relative h-full">
       <div
         ref={scrollContainerRef}
+        data-scroll-region="review-diff"
         className="h-full overflow-y-auto"
       >
         <div className="flex flex-col gap-3 p-3">
