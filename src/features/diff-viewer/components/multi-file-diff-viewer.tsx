@@ -314,12 +314,14 @@ const SingleFileDiffSection = memo(function SingleFileDiffSection({
     <div
       ref={sectionRef}
       id={`diff-file-${file.filename}`}
-      className="overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950"
+      className="overflow-clip rounded-lg border border-zinc-800 bg-zinc-950"
     >
-      {/* Sticky file header within this section */}
+      {/* Sticky file header within this section. The section uses overflow-clip
+          (not overflow-hidden) so it doesn't become the sticky scroll container. */}
       <div
         ref={headerRef}
         data-file-path={file.filename}
+        className="sticky top-0 z-10"
       >
         <CollapsibleFileHeader
           file={file}
@@ -393,7 +395,7 @@ function CollapsibleFileHeader({
   );
 
   return (
-    <div className="flex w-full items-center gap-2 border-b border-zinc-700/50 bg-zinc-900/95 px-3 py-2">
+    <div className="flex w-full items-center gap-2 border-b border-zinc-700/50 bg-zinc-900/95 px-3 py-2 backdrop-blur-sm">
       <button
         type="button"
         onClick={onToggleCollapse}
