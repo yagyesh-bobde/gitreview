@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type { PRFile } from '@/types/pr';
@@ -15,6 +15,7 @@ import {
   type PrioritySource,
   type PriorityStatus,
 } from '../lib/priority';
+import { useUIStore } from '@/stores/ui-store';
 import { useTypesafeKey } from './use-typesafe-key';
 
 const ENDPOINT = '/api/ai/prioritize';
@@ -39,6 +40,8 @@ export type FilePriorityState =
   | { kind: 'checking' }
   /** No own key and the free demo is used up (or not offered). */
   | { kind: 'unavailable' }
+  /** Auto-run is off in Settings; waiting for the user to start a run. */
+  | { kind: 'manual' }
   | { kind: 'loading'; viaDemo: boolean }
   | { kind: 'error'; code: PriorityErrorCode; viaDemo: boolean }
   | { kind: 'ready'; source: PrioritySource; buckets: Map<string, PriorityBucket> };
@@ -99,15 +102,17 @@ export function usePriorityStatus(enabled = true) {
 }
 
 /**
- * AI priority buckets for a PR's files. Runs automatically for PRs with at
- * least PRIORITY_MIN_FILES files when the user has their own TypeSafe key or
- * an unused free demo. Results are keyed by each file's sha, so new commits
+ * AI priority buckets for a PR's files. Runs for PRs with at least
+ * PRIORITY_MIN_FILES files when the user has their own TypeSafe key or an
+ * unused free demo -- automatically, or via `run()` when auto-run is off in
+ * Settings. Results are keyed by each file's sha, so new commits
  * re-prioritize. Only a short hash of the user's key enters the query key, so
  * replacing a key (e.g. after an invalid one) gets a fresh attempt.
  */
 export function useFilePriority(org: string, repo: string, prNumber: number, files: PRFile[]) {
   const queryClient = useQueryClient();
   const { apiKey } = useTypesafeKey();
+  const autoRun = useUIStore((s) => s.aiPriorityAutoRun);
   const usingOwnKey = !!apiKey;
   const qualifies = files.length >= PRIORITY_MIN_FILES;
 
@@ -123,15 +128,21 @@ export function useFilePriority(org: string, repo: string, prNumber: number, fil
     [inputs],
   );
 
+  const queryKey = [
+    'ai-priority',
+    org,
+    repo,
+    prNumber,
+    fingerprint,
+    apiKey ? `own-key:${keyFingerprint(apiKey)}` : 'demo',
+  ] as const;
+  // With auto-run off, a manual run applies to this exact PR snapshot only;
+  // new commits go back to waiting for the user.
+  const [requestedKey, setRequestedKey] = useState<string | null>(null);
+  const requested = requestedKey === queryKey.join('|');
+
   const priority = useQuery({
-    queryKey: [
-      'ai-priority',
-      org,
-      repo,
-      prNumber,
-      fingerprint,
-      apiKey ? `own-key:${keyFingerprint(apiKey)}` : 'demo',
-    ],
+    queryKey,
     queryFn: async () => {
       try {
         return await fetchPriority(inputs, apiKey);
@@ -140,7 +151,10 @@ export function useFilePriority(org: string, repo: string, prNumber: number, fil
         if (!usingOwnKey) queryClient.invalidateQueries({ queryKey: PRIORITY_STATUS_QUERY_KEY });
       }
     },
-    enabled: qualifies && (usingOwnKey || status.data?.demoAvailable === true),
+    enabled:
+      qualifies &&
+      (autoRun || requested) &&
+      (usingOwnKey || status.data?.demoAvailable === true),
     staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -166,6 +180,8 @@ export function useFilePriority(org: string, repo: string, prNumber: number, fil
     state = { kind: 'checking' };
   } else if (!usingOwnKey && !status.data?.demoAvailable && !priority.isFetching) {
     state = { kind: 'unavailable' };
+  } else if (!autoRun && !requested && !priority.isFetching) {
+    state = { kind: 'manual' };
   } else if (priority.error) {
     const code =
       priority.error instanceof PriorityRequestError
@@ -176,5 +192,9 @@ export function useFilePriority(org: string, repo: string, prNumber: number, fil
     state = { kind: 'loading', viaDemo: !usingOwnKey };
   }
 
-  return { state, retry: () => void priority.refetch() };
+  return {
+    state,
+    run: () => setRequestedKey(queryKey.join('|')),
+    retry: () => void priority.refetch(),
+  };
 }

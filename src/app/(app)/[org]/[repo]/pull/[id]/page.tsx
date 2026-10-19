@@ -148,6 +148,7 @@ export default function PullRequestPage({ params }: Props) {
                     state={priority.state}
                     selectedFile={activeFile}
                     onFileSelect={handleFileSelect}
+                    onRun={priority.run}
                     onRetry={priority.retry}
                   />
                 ) : files.data ? (

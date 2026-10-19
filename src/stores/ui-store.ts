@@ -19,6 +19,9 @@ interface UIStore {
   /** Whether the scroll-to-top button is shown on the review page. Enabled by default. */
   scrollToTopEnabled: boolean;
 
+  /** Whether AI file priority runs on its own when a big PR opens. Enabled by default. */
+  aiPriorityAutoRun: boolean;
+
   /** Tint for muted text, folder icons and hover/selected rows. */
   accentTheme: AccentTheme;
 
@@ -32,6 +35,7 @@ interface UIStore {
   setConversationOpen: (open: boolean) => void;
   setScrollToTopEnabled: (enabled: boolean) => void;
   setAccentTheme: (theme: AccentTheme) => void;
+  setAiPriorityAutoRun: (enabled: boolean) => void;
   toggleRepoExclusion: (repoFullName: string) => void;
   clearExcludedRepos: () => void;
 }
@@ -45,6 +49,7 @@ export const useUIStore = create<UIStore>()(
       conversationOpen: false,
       scrollToTopEnabled: true,
       accentTheme: 'green',
+      aiPriorityAutoRun: true,
       excludedRepos: [],
 
       setSidebarWidth: (width: number) =>
@@ -64,6 +69,8 @@ export const useUIStore = create<UIStore>()(
 
       setAccentTheme: (theme: AccentTheme) => set({ accentTheme: theme }),
 
+      setAiPriorityAutoRun: (enabled: boolean) => set({ aiPriorityAutoRun: enabled }),
+
       toggleRepoExclusion: (repoFullName: string) =>
         set((state) => ({
           excludedRepos: state.excludedRepos.includes(repoFullName)
@@ -80,6 +87,7 @@ export const useUIStore = create<UIStore>()(
         dashboardView: state.dashboardView,
         scrollToTopEnabled: state.scrollToTopEnabled,
         accentTheme: state.accentTheme,
+        aiPriorityAutoRun: state.aiPriorityAutoRun,
         excludedRepos: state.excludedRepos,
       }),
     },

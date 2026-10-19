@@ -24,14 +24,6 @@ interface FileTreeNodeProps {
   onToggleViewed: (node: FileTreeNodeType) => void;
 }
 
-export const STATUS_COLORS: Record<string, string> = {
-  added: "text-emerald-400",
-  removed: "text-red-400",
-  modified: "text-yellow-400",
-  renamed: "text-blue-400",
-  copied: "text-blue-400",
-};
-
 export const STATUS_DOT_COLORS: Record<string, string> = {
   added: "bg-emerald-400",
   removed: "bg-red-400",
@@ -107,6 +99,7 @@ export function FileTreeNode({
     <div
       role="treeitem"
       tabIndex={0}
+      aria-selected={isSelected}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       className={cn(
@@ -132,13 +125,8 @@ export function FileTreeNode({
         )}
       </span>
 
-      {/* Name with status color */}
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate font-mono text-xs",
-          node.status && STATUS_COLORS[node.status]
-        )}
-      >
+      {/* Name stays neutral; the status dot carries added/modified/removed */}
+      <span className="min-w-0 flex-1 truncate font-mono text-xs">
         {node.name}
       </span>
 

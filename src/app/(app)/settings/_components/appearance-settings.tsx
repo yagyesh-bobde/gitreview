@@ -2,6 +2,7 @@
 
 import { Folder } from 'lucide-react';
 import { useUIStore, ACCENT_THEMES, type AccentTheme } from '@/stores/ui-store';
+import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
 
 const ACCENT_LABELS: Record<AccentTheme, { name: string; description: string }> = {
@@ -105,39 +106,6 @@ function AccentOption({ theme, selected, onSelect }: AccentOptionProps) {
       </div>
       <p className="mt-2 text-sm font-medium">{name}</p>
       <p className="text-xs text-muted-foreground">{description}</p>
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Toggle — minimal accessible switch
-// ---------------------------------------------------------------------------
-
-interface ToggleProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label: string;
-}
-
-function Toggle({ checked, onChange, label }: ToggleProps) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950',
-        checked ? 'bg-green-500' : 'bg-zinc-700',
-      )}
-    >
-      <span
-        className={cn(
-          'inline-block size-4 transform rounded-full bg-white shadow transition-transform',
-          checked ? 'translate-x-4' : 'translate-x-0.5',
-        )}
-      />
     </button>
   );
 }
