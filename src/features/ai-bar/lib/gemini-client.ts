@@ -1,7 +1,7 @@
 // Google Generative AI client (server-only)
 //
 // Thin wrapper around @google/generative-ai. Centralizes API-key handling and
-// a JSON-mode helper so feature routes (categorization, summaries, chat) don't
+// a JSON-mode helper so feature routes (summaries, chat) don't
 // each re-instantiate the SDK or re-implement JSON parsing.
 import 'server-only';
 

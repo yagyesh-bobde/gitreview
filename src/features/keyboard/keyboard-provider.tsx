@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   SHORTCUTS,
   matchesShortcut,
@@ -49,6 +50,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   const [scope, setScope] = useState<ShortcutScope>('global');
   const [isPaletteOpen, setPaletteOpen] = useState(false);
   const [isShortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+  const router = useRouter();
 
   // Map of shortcut id -> action handler. Using a ref so the keydown
   // listener doesn't need to be re-attached when handlers change.
@@ -68,6 +70,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   const scopeRef = useRef(scope);
   const paletteRef = useRef(isPaletteOpen);
   const shortcutsModalRef = useRef(isShortcutsModalOpen);
+  const routerRef = useRef(router);
 
   useEffect(() => {
     scopeRef.current = scope;
@@ -80,6 +83,10 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     shortcutsModalRef.current = isShortcutsModalOpen;
   }, [isShortcutsModalOpen]);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -134,6 +141,14 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
             // Don't open shortcuts modal when palette is open
             if (paletteRef.current) return;
             setShortcutsModalOpen((prev) => !prev);
+            return;
+          }
+          if (shortcut.id === 'open-settings') {
+            setPaletteOpen(false);
+            setShortcutsModalOpen(false);
+            if (window.location.pathname !== '/settings') {
+              routerRef.current.push('/settings');
+            }
             return;
           }
 

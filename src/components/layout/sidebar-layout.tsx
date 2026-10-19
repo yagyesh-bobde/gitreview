@@ -7,10 +7,12 @@ import { cn } from '@/lib/utils/cn';
 
 interface SidebarLayoutProps {
   sidebar: ReactNode;
+  /** Replaces the default "Files" label in the sidebar header. */
+  header?: ReactNode;
   children: ReactNode;
 }
 
-export function SidebarLayout({ sidebar, children }: SidebarLayoutProps) {
+export function SidebarLayout({ sidebar, header, children }: SidebarLayoutProps) {
   const { sidebarWidth, sidebarCollapsed, setSidebarWidth, toggleSidebar } = useUIStore();
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
@@ -54,7 +56,11 @@ export function SidebarLayout({ sidebar, children }: SidebarLayoutProps) {
       >
         {/* Sidebar header with collapse toggle */}
         <div className="flex h-10 items-center justify-between border-b border-zinc-800 px-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-ui-muted">Files</span>
+          {header ?? (
+            <span className="text-xs font-medium uppercase tracking-wider text-ui-muted">
+              Files
+            </span>
+          )}
           <button
             onClick={toggleSidebar}
             className="flex size-6 items-center justify-center rounded-md text-ui-muted transition-colors hover:bg-zinc-800 hover:text-zinc-300"

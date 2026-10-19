@@ -44,6 +44,15 @@ export const SHORTCUTS: Shortcut[] = [
     display: '⌘P',
   },
   {
+    id: 'open-settings',
+    keys: ['Meta+,', 'Control+,'],
+    label: 'Open Settings',
+    description: 'Go to the settings page',
+    scope: 'global',
+    category: 'navigation',
+    display: '⌘,',
+  },
+  {
     id: 'toggle-sidebar',
     keys: ['Meta+b', 'Control+b'],
     label: 'Toggle Sidebar',

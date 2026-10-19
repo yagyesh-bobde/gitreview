@@ -24,7 +24,7 @@ interface FileTreeNodeProps {
   onToggleViewed: (node: FileTreeNodeType) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
+export const STATUS_COLORS: Record<string, string> = {
   added: "text-emerald-400",
   removed: "text-red-400",
   modified: "text-yellow-400",
@@ -32,7 +32,7 @@ const STATUS_COLORS: Record<string, string> = {
   copied: "text-blue-400",
 };
 
-const STATUS_DOT_COLORS: Record<string, string> = {
+export const STATUS_DOT_COLORS: Record<string, string> = {
   added: "bg-emerald-400",
   removed: "bg-red-400",
   modified: "bg-yellow-400",

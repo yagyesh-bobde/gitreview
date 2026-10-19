@@ -10,6 +10,8 @@ export const users = pgTable('users', {
   name: text('name'),
   image: text('image'),
   activeAccountId: uuid('active_account_id'),
+  /** When the user spent their one free AI priority demo run (null = unused). */
+  aiDemoUsedAt: timestamp('ai_demo_used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()

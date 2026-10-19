@@ -19,9 +19,6 @@ interface UIStore {
   /** Whether the scroll-to-top button is shown on the review page. Enabled by default. */
   scrollToTopEnabled: boolean;
 
-  /** Whether the diff viewer groups files into AI category accordions. */
-  groupByCategory: boolean;
-
   /** Tint for muted text, folder icons and hover/selected rows. */
   accentTheme: AccentTheme;
 
@@ -34,7 +31,6 @@ interface UIStore {
   toggleConversation: () => void;
   setConversationOpen: (open: boolean) => void;
   setScrollToTopEnabled: (enabled: boolean) => void;
-  setGroupByCategory: (enabled: boolean) => void;
   setAccentTheme: (theme: AccentTheme) => void;
   toggleRepoExclusion: (repoFullName: string) => void;
   clearExcludedRepos: () => void;
@@ -48,7 +44,6 @@ export const useUIStore = create<UIStore>()(
       dashboardView: 'ide',
       conversationOpen: false,
       scrollToTopEnabled: true,
-      groupByCategory: false,
       accentTheme: 'green',
       excludedRepos: [],
 
@@ -67,8 +62,6 @@ export const useUIStore = create<UIStore>()(
 
       setScrollToTopEnabled: (enabled: boolean) => set({ scrollToTopEnabled: enabled }),
 
-      setGroupByCategory: (enabled: boolean) => set({ groupByCategory: enabled }),
-
       setAccentTheme: (theme: AccentTheme) => set({ accentTheme: theme }),
 
       toggleRepoExclusion: (repoFullName: string) =>
@@ -86,7 +79,6 @@ export const useUIStore = create<UIStore>()(
       partialize: (state) => ({
         dashboardView: state.dashboardView,
         scrollToTopEnabled: state.scrollToTopEnabled,
-        groupByCategory: state.groupByCategory,
         accentTheme: state.accentTheme,
         excludedRepos: state.excludedRepos,
       }),
