@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient, useIsFetching } from '@tanstack/react-query';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { usePrFreshness } from './use-pr-freshness';
 
 /**
@@ -12,7 +12,9 @@ import { usePrFreshness } from './use-pr-freshness';
  *  1. The probe (usePrFreshness) periodically reads the PR's latest updatedAt.
  *  2. If that differs from the displayed copy's updatedAt, `hasUpdate` is true
  *     and the UI can show a "PR changed -- Refresh" banner.
- *  3. The user clicks refresh -> we invalidate the frozen content queries.
+ *  3. The user clicks refresh -> we drop the server's Redis copy of the PR
+ *     (files/diffs outlive the metadata TTL, so the refetch would otherwise
+ *     return stale content), then invalidate the frozen content queries.
  *     They refetch and swap in place; because cached data already exists there
  *     is no loading skeleton.
  *  4. Refetched content carries the new updatedAt, so `displayedUpdatedAt`
@@ -25,6 +27,7 @@ export function usePrRefresh(
   displayedUpdatedAt: string | undefined,
 ): { hasUpdate: boolean; isRefreshing: boolean; refresh: () => void } {
   const queryClient = useQueryClient();
+  const [isClearing, setIsClearing] = useState(false);
   const freshness = usePrFreshness(org, repo, id, {
     enabled: !!displayedUpdatedAt,
   });
@@ -44,9 +47,19 @@ export function usePrRefresh(
     queryKey: ['pr-diff', org, repo, id],
   });
   const isRefreshing =
+    isClearing ||
     refetchingPr + refetchingFiles + refetchingComments + refetchingDiff > 0;
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
+    setIsClearing(true);
+    try {
+      // Best-effort: on failure we still refetch, at worst from the old cache.
+      await fetch(`/api/github/${org}/${repo}/pull/${id}/refresh`, { method: 'POST' });
+    } catch {
+      // Network error -- fall through to the client refetch.
+    } finally {
+      setIsClearing(false);
+    }
     // Invalidate the frozen content queries so they refetch and swap in place.
     // ['pr-diff', org, repo, id] is a PREFIX match in v5, covering all
     // per-file diff queries.
