@@ -4,7 +4,9 @@ import { useState, type FormEvent } from 'react';
 import { Check, ExternalLink, Eye, EyeOff, KeyRound, Loader2, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toggle } from '@/components/ui/toggle';
 import { cn } from '@/lib/utils';
+import { useUIStore } from '@/stores/ui-store';
 import { useTypesafeKey } from '@/features/ai-priority/hooks/use-typesafe-key';
 import { usePriorityStatus } from '@/features/ai-priority/hooks/use-file-priority';
 import { BucketMarker } from '@/features/ai-priority/components/priority-file-list';
@@ -53,10 +55,33 @@ export function AISettings() {
           </ul>
         </div>
 
+        <AutoRunRow />
         <DemoStatusRow />
         <ApiKeyRow />
       </div>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AutoRunRow
+// ---------------------------------------------------------------------------
+
+function AutoRunRow() {
+  const autoRun = useUIStore((s) => s.aiPriorityAutoRun);
+  const setAutoRun = useUIStore((s) => s.setAiPriorityAutoRun);
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">Run automatically</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Prioritize eligible pull requests as soon as you open them. When off, start a run from
+          the Priority tab with Prioritize with AI.
+        </p>
+      </div>
+      <Toggle checked={autoRun} onChange={setAutoRun} label="Run AI priority automatically" />
+    </div>
   );
 }
 
@@ -72,8 +97,8 @@ function DemoStatusRow() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">Free demo</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          One AI prioritization on us. It runs automatically on the first eligible PR you open
-          without your own key.
+          One AI prioritization on us, used on the first eligible PR prioritized without your own
+          key.
         </p>
       </div>
       {status.isPending ? (
