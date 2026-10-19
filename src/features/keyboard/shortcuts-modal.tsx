@@ -146,7 +146,7 @@ export function ShortcutBadge({
   className?: string;
 }) {
   // Split display like "⌘P" into individual keys
-  const keys = display.match(/[⌘⇧⌥⌃]|[A-Za-z0-9?]/g) ?? [display];
+  const keys = display.match(/[⌘⇧⌥⌃]|[A-Za-z0-9?,]/g) ?? [display];
 
   return (
     <span className={cn('inline-flex items-center gap-0.5', className)}>

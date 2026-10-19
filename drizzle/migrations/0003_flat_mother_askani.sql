@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "ai_demo_used_at" timestamp with time zone;

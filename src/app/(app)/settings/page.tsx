@@ -1,17 +1,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { ArrowLeft, Users, Palette, Bell } from 'lucide-react';
+import { use, useState } from 'react';
+import { ArrowLeft, Users, Palette, Sparkles, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AccountManagement } from './_components/account-management';
 import { AppearanceSettings } from './_components/appearance-settings';
+import { AISettings } from './_components/ai-settings';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-type SectionId = 'accounts' | 'appearance';
+const SECTION_IDS = ['accounts', 'appearance', 'ai'] as const;
+type SectionId = (typeof SECTION_IDS)[number];
+
+/** Resolve a `?section=<id>` deep link, falling back to the first section. */
+function toSectionId(value: string | string[] | undefined): SectionId {
+  return SECTION_IDS.find((id) => id === value) ?? 'accounts';
+}
 
 interface NavItem {
   id: SectionId | 'notifications';
@@ -27,6 +34,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'accounts', label: 'Accounts', icon: Users },
   { id: 'appearance', label: 'Appearance', icon: Palette },
+  { id: 'ai', label: 'AI', icon: Sparkles },
   { id: 'notifications', label: 'Notifications', icon: Bell, comingSoon: true },
 ];
 
@@ -77,8 +85,19 @@ function SidebarItem({ item, isActive, onClick }: SidebarItemProps) {
 // Page
 // ---------------------------------------------------------------------------
 
-export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<SectionId>('accounts');
+interface Props {
+  searchParams: Promise<{ section?: string | string[] }>;
+}
+
+export default function SettingsPage({ searchParams }: Props) {
+  const { section } = use(searchParams);
+  const [activeSection, setActiveSection] = useState<SectionId>(() => toSectionId(section));
+
+  const selectSection = (id: SectionId) => {
+    setActiveSection(id);
+    // Keep the URL shareable without a navigation round-trip.
+    window.history.replaceState(null, '', `?section=${id}`);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-950">
@@ -108,7 +127,7 @@ export default function SettingsPage() {
                   <SidebarItem
                     item={item}
                     isActive={activeSection === item.id}
-                    onClick={() => setActiveSection(item.id as SectionId)}
+                    onClick={() => selectSection(item.id as SectionId)}
                   />
                 </li>
               ))}
@@ -121,6 +140,7 @@ export default function SettingsPage() {
           <div className="mx-auto max-w-2xl">
             {activeSection === 'accounts' && <AccountManagement />}
             {activeSection === 'appearance' && <AppearanceSettings />}
+            {activeSection === 'ai' && <AISettings />}
           </div>
         </main>
       </div>

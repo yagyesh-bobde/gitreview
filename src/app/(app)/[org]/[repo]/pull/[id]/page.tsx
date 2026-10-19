@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useCallback, useRef } from 'react';
+import { use, useEffect, useCallback, useRef, useState } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { SidebarLayout } from '@/components/layout/sidebar-layout';
 import { FileTree } from '@/features/file-tree/components/file-tree';
@@ -18,6 +18,14 @@ import { ReviewPalette } from './review-palette';
 import { ConversationPanel } from './conversation-panel';
 import { CollapsibleHeader } from './collapsible-header';
 import { track, AnalyticsEvent } from '@/lib/analytics/events';
+import { useFilePriority } from '@/features/ai-priority/hooks/use-file-priority';
+import { AIDemoBanner } from '@/features/ai-priority/components/ai-demo-banner';
+import { PriorityFileList } from '@/features/ai-priority/components/priority-file-list';
+import {
+  SidebarViewToggle,
+  defaultSidebarView,
+  type SidebarView,
+} from '@/features/ai-priority/components/sidebar-view-toggle';
 
 interface Props {
   params: Promise<{ org: string; repo: string; id: string }>;
@@ -34,6 +42,13 @@ export default function PullRequestPage({ params }: Props) {
   const prNumber = Number(id);
   const pr = usePR(org, repo, prNumber);
   const files = usePRFiles(org, repo, prNumber);
+
+  // AI priority buckets for big PRs. The sidebar defaults to the Priority view
+  // while it applies, until the user picks a view themselves.
+  const priority = useFilePriority(org, repo, prNumber, files.data ?? []);
+  const [viewChoice, setViewChoice] = useState<SidebarView | null>(null);
+  const showViewToggle = priority.state.kind !== 'ineligible';
+  const sidebarView = showViewToggle ? (viewChoice ?? defaultSidebarView(priority.state)) : 'files';
 
   // Fire once per PR review page view.
   useEffect(() => {
@@ -108,15 +123,33 @@ export default function PullRequestPage({ params }: Props) {
         </CollapsibleHeader>
 
         <ReviewRefreshBanner org={org} repo={repo} prNumber={prNumber} />
+        <AIDemoBanner state={priority.state} />
 
         <div className="flex min-h-0 flex-1">
           <div className="min-w-0 flex-1">
             <SidebarLayout
+              header={
+                showViewToggle ? (
+                  <SidebarViewToggle
+                    value={sidebarView}
+                    onChange={setViewChoice}
+                    isPrioritizing={priority.state.kind === 'loading'}
+                  />
+                ) : undefined
+              }
               sidebar={
                 files.isLoading ? (
                   <FileTreeSkeleton />
                 ) : files.error ? (
                   <FileTreeError onRetry={() => files.refetch()} />
+                ) : files.data && sidebarView === 'priority' ? (
+                  <PriorityFileList
+                    files={files.data}
+                    state={priority.state}
+                    selectedFile={activeFile}
+                    onFileSelect={handleFileSelect}
+                    onRetry={priority.retry}
+                  />
                 ) : files.data ? (
                   <FileTree
                     files={files.data}

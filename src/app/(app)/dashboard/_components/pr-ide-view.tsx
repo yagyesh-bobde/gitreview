@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { PullRequest, PullRequestState } from '@/types/pr';
 import { useUIStore } from '@/stores/ui-store';
+import { getShortcut } from '@/features/keyboard';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -284,10 +285,16 @@ function Sidebar({
 
       {/* Bottom sidebar */}
       <div className="border-t border-zinc-800/50 px-3 py-2">
-        <button className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono text-ui-faint hover:text-zinc-400 hover:bg-ui-hover transition-colors">
+        <Link
+          href="/settings"
+          className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs font-mono text-ui-faint hover:text-zinc-400 hover:bg-ui-hover transition-colors"
+        >
           <Settings className="size-3.5 shrink-0" />
           Settings
-        </button>
+          <kbd className="ml-auto rounded border border-zinc-800 bg-zinc-900 px-1 py-0.5 text-[10px] leading-none text-ui-faint">
+            {getShortcut('open-settings')?.display}
+          </kbd>
+        </Link>
       </div>
     </aside>
   );
