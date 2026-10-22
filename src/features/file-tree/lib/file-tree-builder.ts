@@ -216,3 +216,46 @@ function findAncestors(
   }
   return false;
 }
+
+/** True when every file under the node (or the file itself) is marked viewed. */
+export function isFullyViewed(
+  node: FileTreeNode,
+  viewed: Record<string, boolean>
+): boolean {
+  return collectFilePaths(node).every((p) => viewed[p]);
+}
+
+/**
+ * Returns a copy of the tree where fully viewed files/folders sink below
+ * unviewed siblings. Existing order is preserved within each group.
+ */
+export function sortViewedLast(
+  nodes: FileTreeNode[],
+  viewed: Record<string, boolean>
+): FileTreeNode[] {
+  const pending: FileTreeNode[] = [];
+  const done: FileTreeNode[] = [];
+  for (const node of nodes) {
+    const next = node.children
+      ? { ...node, children: sortViewedLast(node.children, viewed) }
+      : node;
+    (isFullyViewed(node, viewed) ? done : pending).push(next);
+  }
+  return [...pending, ...done];
+}
+
+/** Collect paths of directories whose files are all viewed. */
+export function collectViewedDirectoryPaths(
+  nodes: FileTreeNode[],
+  viewed: Record<string, boolean>
+): string[] {
+  const paths: string[] = [];
+  for (const node of nodes) {
+    if (node.type !== "directory") continue;
+    if (isFullyViewed(node, viewed)) paths.push(node.path);
+    if (node.children) {
+      paths.push(...collectViewedDirectoryPaths(node.children, viewed));
+    }
+  }
+  return paths;
+}

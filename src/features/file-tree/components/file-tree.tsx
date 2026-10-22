@@ -39,17 +39,15 @@ export function FileTree({
   assetRefs,
   className,
 }: FileTreeProps) {
+  const viewedFiles = useReviewStore((s) => s.viewedFiles);
   const {
     tree,
     expandedPaths,
     toggleDirectory,
-    collapseDirectory,
     expandAll,
     collapseAll,
     fileCount,
-  } = useFileTree(files, selectedFile);
-
-  const viewedFiles = useReviewStore((s) => s.viewedFiles);
+  } = useFileTree(files, selectedFile, viewedFiles);
   const staleViewedFiles = useReviewStore((s) => s.staleViewedFiles);
   const setFilesViewed = useReviewStore((s) => s.setFilesViewed);
   const setActiveFile = useReviewStore((s) => s.setActiveFile);
@@ -60,9 +58,9 @@ export function FileTree({
   const progressPct = fileCount > 0 ? (viewedCount / fileCount) * 100 : 0;
 
   // Toggle "viewed" for a node. For a folder this marks every descendant file
-  // viewed (or clears it), and when marking viewed it collapses the folder in
-  // the tree; the matching diffs collapse on the right pane automatically since
-  // their collapse state follows "viewed".
+  // viewed (or clears it). Fully viewed folders collapse in the tree via
+  // useFileTree; the matching diffs collapse on the right pane automatically
+  // since their collapse state follows "viewed".
   const handleToggleViewed = useCallback(
     (node: FileTreeNodeType) => {
       const paths = collectFilePaths(node);
@@ -70,16 +68,18 @@ export function FileTree({
       const allViewed = paths.every((p) => viewedFiles[p]);
       setFilesViewed(paths, !allViewed);
 
-      if (!allViewed && node.type === "directory") {
-        collapseDirectory(node.path);
-        // Clear the active file if it lived inside this now-collapsed folder,
-        // otherwise the tree would auto-re-expand to reveal it.
-        if (selectedFile && paths.includes(selectedFile)) {
-          setActiveFile(null);
-        }
+      // Clear the active file if it lived inside this now-collapsed folder,
+      // otherwise the tree would auto-re-expand to reveal it.
+      if (
+        !allViewed &&
+        node.type === "directory" &&
+        selectedFile &&
+        paths.includes(selectedFile)
+      ) {
+        setActiveFile(null);
       }
     },
-    [viewedFiles, setFilesViewed, collapseDirectory, selectedFile, setActiveFile],
+    [viewedFiles, setFilesViewed, selectedFile, setActiveFile],
   );
 
   if (files.length === 0) {
