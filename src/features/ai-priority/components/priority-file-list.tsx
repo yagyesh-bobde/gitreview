@@ -227,10 +227,12 @@ export function PriorityFileList({
           </Notice>
         ) : state.kind === 'error' ? (
           <ErrorNotice code={state.code} onRetry={onRetry} />
+        ) : state.kind === 'manual' ? (
+          // Only path-bucketed Tests/Docs would render here, hiding every other file.
+          <ManualRunNotice onRun={onRun} />
         ) : (
           <>
             {isPending && <PrioritizingSkeleton />}
-            {state.kind === 'manual' && <ManualRunNotice onRun={onRun} />}
             {groups.map((group) => (
               <BucketSection
                 key={group.bucket}
@@ -376,8 +378,9 @@ function ManualRunNotice({ onRun }: { onRun: () => void }) {
   return (
     <div className="mb-1 px-3 py-2.5">
       <p className="text-xs leading-relaxed text-ui-muted">
-        Auto-run is off in <SettingsLink>Settings</SettingsLink>. Sort this PR’s files by review
-        risk when you’re ready.
+        AI priority is off. Turn on <span className="text-zinc-300">Run automatically</span> in{' '}
+        <SettingsLink>Settings</SettingsLink> to sort every large PR by review risk, or run it for
+        this PR.
       </p>
       <button
         type="button"
